@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>66 — Die Reihenfolge der Bibel</title>
+<style>
+  :root{
+    --paper: #EFEAE0;
+    --paper-2: #E5DECD;
+    --ink: #1E2A38;
+    --ink-soft: #4A5A6A;
+    --gold: #A9812E;
+    --gold-soft: #D8C48F;
+    --green: #4B6C4E;
+    --green-soft: #CFE0CE;
+    --red: #8B3A3A;
+    --red-soft: #E7CFC9;
+    --rule: #C9C0AC;
+    --serif: Georgia, "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--sans);
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    padding:20px 14px 40px;
+  }
+  .app{width:100%;max-width:440px;}
+
+  header{text-align:center;margin-bottom:18px;}
+  header .num{
+    font-family:var(--serif);
+    font-size:44px;
+    line-height:1;
+    letter-spacing:1px;
+    color:var(--ink);
+  }
+  header .sub{
+    font-size:13.5px;
+    color:var(--ink-soft);
+    margin-top:4px;
+  }
+
+  .shelf{
+    display:flex;
+    flex-wrap:wrap;
+    gap:2px;
+    padding:10px;
+    background:var(--paper-2);
+    border-radius:4px;
+    margin-bottom:8px;
+  }
+  .spine{
+    width:5.2px;
+    height:26px;
+    border-radius:1px;
+    background:#B9AF98;
+    transition:background 0.4s ease, transform 0.2s ease;
+  }
+  .spine.green{background:var(--green);}
+  .spine.mid{background:#B9AF98;}
+  .spine.red{background:var(--red);}
+  .spine.pulse{transform:scaleY(1.15);}
+  .legend{
+    display:flex;
+    gap:14px;
+    justify-content:center;
+    font-size:11px;
+    color:var(--ink-soft);
+    margin-bottom:14px;
+  }
+  .legend span{display:inline-flex;align-items:center;gap:5px;}
+  .dot{width:8px;height:8px;border-radius:50%;display:inline-block;}
+  .dot.green{background:var(--green);}
+  .dot.mid{background:#B9AF98;}
+  .dot.red{background:var(--red);}
+
+  .testBar{display:flex;justify-content:center;margin-bottom:14px;}
+  button.testStart{
+    font-family:var(--sans);
+    font-size:12.5px;
+    padding:8px 14px;
+    background:transparent;
+    color:var(--gold);
+    border:1px solid var(--gold);
+    border-radius:20px;
+    cursor:pointer;
+  }
+
+  .card{
+    background:#fff;
+    border:1px solid var(--rule);
+    border-radius:6px;
+    padding:24px 20px;
+    min-height:230px;
+    display:flex;
+    flex-direction:column;
+  }
+  .testHeader{
+    font-family:var(--sans);
+    font-size:11.5px;
+    letter-spacing:0.3px;
+    color:var(--gold);
+    margin-bottom:8px;
+  }
+  .qtype{
+    font-family:var(--serif);
+    font-style:italic;
+    font-size:13px;
+    color:var(--ink-soft);
+    margin-bottom:6px;
+  }
+  .qtext{
+    font-family:var(--serif);
+    font-size:19px;
+    line-height:1.4;
+    margin-bottom:18px;
+  }
+
+  .options{display:flex;flex-direction:column;gap:10px;flex:1;}
+  .pairRow{display:flex;gap:10px;}
+  .pairRow .opt{flex:1;}
+
+  .opt{
+    font-family:var(--sans);
+    font-size:15.5px;
+    padding:14px 12px;
+    background:var(--paper);
+    border:1px solid var(--rule);
+    border-radius:5px;
+    text-align:center;
+    cursor:pointer;
+    color:var(--ink);
+    transition:background 0.15s ease, border-color 0.15s ease;
+  }
+  .opt:active{background:var(--paper-2);}
+  .opt.correct{background:var(--green-soft);border-color:var(--green);}
+  .opt.wrong{background:var(--red-soft);border-color:var(--red);}
+  .opt.disabled{pointer-events:none;opacity:0.55;}
+
+  .seqLine{
+    font-family:var(--serif);
+    font-size:16.5px;
+    line-height:2.1;
+    text-align:center;
+    margin-bottom:16px;
+    color:var(--ink-soft);
+  }
+  .seqLine .blank{
+    display:inline-block;
+    min-width:70px;
+    border-bottom:2px solid var(--gold);
+    color:var(--ink);
+    font-weight:bold;
+  }
+  .seqLine .known{color:var(--ink);}
+
+  .chipsRow{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;}
+  .chip{
+    font-family:var(--sans);
+    font-size:14px;
+    padding:9px 12px;
+    background:var(--paper);
+    border:1px solid var(--rule);
+    border-radius:16px;
+    cursor:pointer;
+  }
+  .chip.used{opacity:0.35;pointer-events:none;}
+  .answerSlots{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    margin-bottom:14px;
+    min-height:40px;
+  }
+  .slot{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-family:var(--serif);
+    font-size:15px;
+    padding:8px 10px;
+    border-bottom:1px dashed var(--rule);
+  }
+  .slot .n{color:var(--gold);font-weight:bold;width:18px;}
+  .slot.correct{color:var(--green);}
+  .slot.wrong{color:var(--red);}
+
+  .actionRow{display:flex;gap:10px;margin-top:auto;}
+  button.primary{
+    font-family:var(--sans);
+    font-size:14.5px;
+    font-weight:600;
+    padding:12px 16px;
+    background:var(--ink);
+    color:var(--paper);
+    border:none;
+    border-radius:5px;
+    cursor:pointer;
+    flex:1;
+  }
+  button.primary:disabled{opacity:0.4;}
+  button.ghost{
+    font-family:var(--sans);
+    font-size:13px;
+    padding:10px 12px;
+    background:transparent;
+    color:var(--ink-soft);
+    border:1px solid var(--rule);
+    border-radius:5px;
+    cursor:pointer;
+  }
+
+  .feedback{
+    font-family:var(--serif);
+    font-size:14.5px;
+    margin-bottom:10px;
+    min-height:20px;
+  }
+  .feedback.good{color:var(--green);}
+  .feedback.bad{color:var(--red);}
+
+  .summaryScore{font-family:var(--serif);font-size:40px;text-align:center;margin:18px 0 8px;}
+  .summaryLine{text-align:center;color:var(--ink-soft);font-size:14px;margin-bottom:20px;}
+
+  footer{
+    margin-top:16px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    font-size:12.5px;
+    color:var(--ink-soft);
+  }
+  footer .resetLink{
+    background:none;border:none;color:var(--ink-soft);
+    text-decoration:underline;cursor:pointer;font-size:12px;font-family:var(--sans);
+    padding:0;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="num">66</div>
+    <div class="sub">Die Reihenfolge der biblischen Bücher</div>
+  </header>
+
+  <div class="shelf" id="shelf"></div>
+  <div class="legend">
+    <span><span class="dot mid"></span>offen</span>
+    <span><span class="dot green"></span>sicher</span>
+    <span><span class="dot red"></span>schwach</span>
+  </div>
+  <div class="testBar">
+    <button class="testStart" id="testBtn">Kurztest starten (10 Fragen)</button>
+  </div>
+
+  <div class="card" id="card"></div>
+
+  <footer>
+    <span id="statLine">Serie: 0 · Richtig: 0/0</span>
+    <button class="resetLink" id="resetBtn">Fortschritt zurücksetzen</button>
+  </footer>
+</div>
+
+<script>
+const BOOKS = [
+"1. Mose","2. Mose","3. Mose","4. Mose","5. Mose","Josua","Richter","Rut",
+"1. Samuel","2. Samuel","1. Könige","2. Könige","1. Chronik","2. Chronik",
+"Esra","Nehemia","Ester","Hiob","Psalmen","Sprüche","Prediger","Hoheslied",
+"Jesaja","Jeremia","Klagelieder","Hesekiel","Daniel","Hosea","Joel","Amos",
+"Obadja","Jona","Micha","Nahum","Habakuk","Zefanja","Haggai","Sacharja","Maleachi",
+"Matthäus","Markus","Lukas","Johannes","Apostelgeschichte","Römer",
+"1. Korinther","2. Korinther","Galater","Epheser","Philipper","Kolosser",
+"1. Thessalonicher","2. Thessalonicher","1. Timotheus","2. Timotheus","Titus",
+"Philemon","Hebräer","Jakobus","1. Petrus","2. Petrus","1. Johannes",
+"2. Johannes","3. Johannes","Judas","Offenbarung"
+];
+const N = BOOKS.length; // 66
+
+const FAMILIES = [
+  {ids:[0,1,2,3,4], label:"Mose-Bücher"},
+  {ids:[5], label:"Josua"}, {ids:[6], label:"Richter"}, {ids:[7], label:"Rut"},
+  {ids:[8,9], label:"Samuelbücher"}, {ids:[10,11], label:"Königsbücher"},
+  {ids:[12,13], label:"Chronikbücher"}, {ids:[14], label:"Esra"},
+  {ids:[15], label:"Nehemia"}, {ids:[16], label:"Ester"}, {ids:[17], label:"Hiob"},
+  {ids:[18], label:"Psalmen"}, {ids:[19], label:"Sprüche"}, {ids:[20], label:"Prediger"},
+  {ids:[21], label:"Hoheslied"}, {ids:[22], label:"Jesaja"}, {ids:[23], label:"Jeremia"},
+  {ids:[24], label:"Klagelieder"}, {ids:[25], label:"Hesekiel"}, {ids:[26], label:"Daniel"},
+  {ids:[27], label:"Hosea"}, {ids:[28], label:"Joel"}, {ids:[29], label:"Amos"},
+  {ids:[30], label:"Obadja"}, {ids:[31], label:"Jona"}, {ids:[32], label:"Micha"},
+  {ids:[33], label:"Nahum"}, {ids:[34], label:"Habakuk"}, {ids:[35], label:"Zefanja"},
+  {ids:[36], label:"Haggai"}, {ids:[37], label:"Sacharja"}, {ids:[38], label:"Maleachi"},
+  {ids:[39], label:"Matthäus"}, {ids:[40], label:"Markus"}, {ids:[41], label:"Lukas"},
+  {ids:[42], label:"Johannes"}, {ids:[43], label:"Apostelgeschichte"}, {ids:[44], label:"Römer"},
+  {ids:[45,46], label:"Korintherbriefe"}, {ids:[47], label:"Galater"}, {ids:[48], label:"Epheser"},
+  {ids:[49], label:"Philipper"}, {ids:[50], label:"Kolosser"}, {ids:[51,52], label:"Thessalonicherbriefe"},
+  {ids:[53,54], label:"Timotheusbriefe"}, {ids:[55], label:"Titus"}, {ids:[56], label:"Philemon"},
+  {ids:[57], label:"Hebräer"}, {ids:[58], label:"Jakobus"}, {ids:[59,60], label:"Petrusbriefe"},
+  {ids:[61,62,63], label:"Johannesbriefe"}, {ids:[64], label:"Judas"}, {ids:[65], label:"Offenbarung"}
+];
+FAMILIES.forEach(f => f.testament = f.ids[0] < 39 ? 'AT' : 'NT');
+const AT_END = FAMILIES.map(f=>f.testament).lastIndexOf('AT');
+const NT_START = AT_END + 1;
+
+// Nur Kategorien mit mehreren Büchern — Apostelgeschichte/Offenbarung sind Einzelbücher und fliegen raus
+const CATEGORIES = [
+  {name:"Gesetz", start:0, end:4},
+  {name:"Geschichtsbücher", start:5, end:16},
+  {name:"Lehr- und Weisheitsbücher", start:17, end:21},
+  {name:"Große Propheten", start:22, end:26},
+  {name:"Kleine Propheten", start:27, end:38},
+  {name:"Evangelien", start:39, end:42},
+  {name:"Paulusbriefe", start:44, end:56},
+  {name:"Allgemeine Briefe", start:57, end:64}
+];
+CATEGORIES.forEach(c => c.testament = c.start < 39 ? 'AT' : 'NT');
+const CATEGORY_EXCLUDED = [43, 65]; // Apostelgeschichte, Offenbarung — keine Kategorie-Fragen dazu
+function categoryOf(idx){ return CATEGORIES.find(c => idx>=c.start && idx<=c.end); }
+function categoryMembers(cat){ const arr=[]; for(let i=cat.start;i<=cat.end;i++) arr.push(i); return arr; }
+
+let weights = new Array(N).fill(6);
+let stats = {totalAnswered:0, totalCorrect:0, currentStreak:0, bestStreak:0};
+let current = null;
+let answered = false;
+let testMode = false, testIndex = 0, testScore = 0;
+const TEST_LENGTH = 10;
+
+async function loadProgress(){
+  try{ const w = await window.storage.get('bible-quiz-weights', false); if(w) weights = JSON.parse(w.value); }catch(e){}
+  try{ const s = await window.storage.get('bible-quiz-stats', false); if(s) stats = JSON.parse(s.value); }catch(e){}
+}
+async function saveProgress(){
+  try{ await window.storage.set('bible-quiz-weights', JSON.stringify(weights), false); }catch(e){}
+  try{ await window.storage.set('bible-quiz-stats', JSON.stringify(stats), false); }catch(e){}
+}
+
+function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+
+function weightedIndex(weightArr, exclude){
+  exclude = exclude || [];
+  let total = 0;
+  for(let i=0;i<weightArr.length;i++) if(!exclude.includes(i)) total += weightArr[i];
+  let r = Math.random()*total;
+  for(let i=0;i<weightArr.length;i++){
+    if(exclude.includes(i)) continue;
+    if(r < weightArr[i]) return i;
+    r -= weightArr[i];
+  }
+  for(let i=weightArr.length-1;i>=0;i--) if(!exclude.includes(i)) return i;
+  return 0;
+}
+function familyWeight(f){ return f.ids.reduce((s,i)=>s+weights[i],0)/f.ids.length; }
+function weightedFamilyIndex(){ return weightedIndex(FAMILIES.map(familyWeight)); }
+function categoryWeight(c){ let s=0,n=0; for(let i=c.start;i<=c.end;i++){s+=weights[i];n++;} return s/n; }
+function weightedCategoryIndex(){ return weightedIndex(CATEGORIES.map(categoryWeight)); }
+
+function updateWeight(idx, correct){
+  weights[idx] = correct ? clamp(weights[idx]-2,1,20) : clamp(weights[idx]+5,1,20);
+}
+function _finishQuestion(overallCorrect, weightUpdates){
+  weightUpdates.forEach(w => updateWeight(w.idx, w.correct));
+  stats.totalAnswered++;
+  if(overallCorrect){
+    stats.totalCorrect++;
+    stats.currentStreak++;
+    stats.bestStreak = Math.max(stats.bestStreak, stats.currentStreak);
+  } else {
+    stats.currentStreak = 0;
+  }
+  if(testMode && overallCorrect) testScore++;
+  saveProgress();
+  renderShelf(weightUpdates.map(w=>w.idx));
+  renderStats();
+}
+function registerResult(bookIndices, correct){
+  _finishQuestion(correct, bookIndices.map(i=>({idx:i, correct})));
+}
+
+function renderShelf(pulseIndices){
+  const shelf = document.getElementById('shelf');
+  shelf.innerHTML = '';
+  for(let i=0;i<N;i++){
+    const d = document.createElement('div');
+    let cls = 'spine mid';
+    if(weights[i] <= 2) cls = 'spine green';
+    else if(weights[i] > 9) cls = 'spine red';
+    if(pulseIndices && pulseIndices.includes(i)) cls += ' pulse';
+    d.className = cls;
+    d.title = BOOKS[i];
+    shelf.appendChild(d);
+  }
+}
+function renderStats(){
+  document.getElementById('statLine').textContent =
+    'Serie: ' + stats.currentStreak + ' · Richtig: ' + stats.totalCorrect + '/' + stats.totalAnswered;
+}
+
+// ---------- Fragen-Generatoren ----------
+
+function genPair(){
+  const a = weightedFamilyIndex();
+  const isAT = FAMILIES[a].testament === 'AT';
+  const lo = isAT ? 0 : NT_START;
+  const hi = isAT ? AT_END : FAMILIES.length-1;
+  let dist = 1 + Math.floor(Math.random()*6);
+  let dir = Math.random()<0.5 ? -1 : 1;
+  let b = a + dir*dist;
+  if(b < lo || b > hi){ dir *= -1; b = a + dir*dist; }
+  b = clamp(b, lo, hi);
+  if(b === a) b = clamp(a + (a>lo ? -1 : 1), lo, hi);
+  const order = Math.random()<0.5 ? [a,b] : [b,a];
+  return { type:'pair', left: order[0], right: order[1] };
+}
+
+function genGap(){
+  const center = weightedFamilyIndex();
+  const len = FAMILIES.length;
+  const start = clamp(center-1, 0, len-3);
+  const windowIdx = [start, start+1, start+2];
+  const blankPos = windowIdx.includes(center) ? windowIdx.indexOf(center) : 1;
+  const blankFam = windowIdx[blankPos];
+  let pool = [];
+  for(let i=0;i<len;i++){
+    if(windowIdx.includes(i)) continue;
+    if(Math.abs(i-blankFam) <= 8) pool.push(i);
+  }
+  if(pool.length < 3) for(let i=0;i<len;i++) if(!windowIdx.includes(i)) pool.push(i);
+  pool = [...new Set(pool)];
+  const distractors = [];
+  while(distractors.length < 3 && pool.length){
+    distractors.push(pool.splice(Math.floor(Math.random()*pool.length),1)[0]);
+  }
+  const optionFams = [blankFam, ...distractors];
+  for(let i=optionFams.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [optionFams[i],optionFams[j]] = [optionFams[j],optionFams[i]];
+  }
+  return { type:'gap', windowIdx, blankPos, blankFam, options: optionFams };
+}
+
+function genOrder(){
+  const base = weightedFamilyIndex();
+  const count = Math.random()<0.5 ? 4 : 5;
+  const span = 9;
+  const len = FAMILIES.length;
+  const isAT = FAMILIES[base].testament === 'AT';
+  const rangeLo = isAT ? 0 : NT_START;
+  const rangeHi = isAT ? AT_END : len-1;
+  let lo = clamp(base-span, rangeLo, rangeHi);
+  let hi = clamp(base+span, rangeLo, rangeHi);
+  if(hi-lo+1 < count){ lo = rangeLo; hi = rangeHi; }
+  let pool = [];
+  for(let i=lo;i<=hi;i++) pool.push(i);
+  const set = new Set([base]);
+  let guard = 0;
+  while(set.size < count && guard < 200){
+    guard++;
+    set.add(pool[Math.floor(Math.random()*pool.length)]);
+  }
+  const fams = [...set].sort((a,b)=>a-b);
+  const shuffled = [...fams];
+  for(let i=shuffled.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [shuffled[i],shuffled[j]] = [shuffled[j],shuffled[i]];
+  }
+  return { type:'order', fams, shuffled, placed: [] };
+}
+
+function genCatBool(){
+  const idx = weightedIndex(weights, CATEGORY_EXCLUDED);
+  const trueCat = categoryOf(idx);
+  const isTrue = Math.random() < 0.5;
+  let statementCat = trueCat;
+  if(!isTrue){
+    const altPool = CATEGORIES.filter(c => c !== trueCat && c.testament === trueCat.testament);
+    statementCat = altPool[Math.floor(Math.random()*altPool.length)];
+  }
+  return { type:'catBool', idx, statementCat, isTrue };
+}
+
+function genCatCount(){
+  const catIdx = weightedCategoryIndex();
+  const cat = CATEGORIES[catIdx];
+  const correct = cat.end - cat.start + 1;
+  const optionsSet = new Set([correct]);
+  let guard = 0;
+  while(optionsSet.size < 4 && guard < 50){
+    guard++;
+    const val = correct + (Math.floor(Math.random()*7) - 3);
+    if(val >= 1) optionsSet.add(val);
+  }
+  const options = [...optionsSet];
+  for(let i=options.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [options[i],options[j]] = [options[j],options[i]];
+  }
+  return { type:'catCount', cat, correct, options };
+}
+
+function genCatOrder(){
+  const catIdx = weightedCategoryIndex();
+  const sameTestament = CATEGORIES.map((c,i)=>i).filter(i => i!==catIdx && CATEGORIES[i].testament === CATEGORIES[catIdx].testament);
+  const other = sameTestament[Math.floor(Math.random()*sameTestament.length)];
+  const order = Math.random()<0.5 ? [catIdx, other] : [other, catIdx];
+  return { type:'catOrder', left: order[0], right: order[1] };
+}
+
+function genCatSelect(){
+  const catIdx = weightedCategoryIndex();
+  const cat = CATEGORIES[catIdx];
+  const members = categoryMembers(cat);
+  const maxK = Math.min(5, members.length);
+  const k = Math.floor(Math.random()*(maxK+1));
+  const shuffledMembers = [...members];
+  for(let i=shuffledMembers.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [shuffledMembers[i],shuffledMembers[j]] = [shuffledMembers[j],shuffledMembers[i]];
+  }
+  const chosenMembers = shuffledMembers.slice(0,k);
+  const excluded = new Set([...members, ...CATEGORY_EXCLUDED]);
+  const pool = [];
+  for(let i=0;i<N;i++) if(!excluded.has(i)) pool.push(i);
+  for(let i=pool.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [pool[i],pool[j]] = [pool[j],pool[i]];
+  }
+  const distractors = pool.slice(0, 5-k);
+  const candidates = [...chosenMembers.map(idx=>({idx, belongs:true})), ...distractors.map(idx=>({idx, belongs:false}))];
+  for(let i=candidates.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [candidates[i],candidates[j]] = [candidates[j],candidates[i]];
+  }
+  return { type:'catSelect', cat, candidates, selected: new Set() };
+}
+
+function nextQuestion(){
+  answered = false;
+  const bag = ['pair','pair','gap','gap','gap','order','order','order','catBool','catBool','catCount','catOrder','catSelect'];
+  const t = bag[Math.floor(Math.random()*bag.length)];
+  if(t === 'pair') current = genPair();
+  else if(t === 'gap') current = genGap();
+  else if(t === 'order') current = genOrder();
+  else if(t === 'catBool') current = genCatBool();
+  else if(t === 'catCount') current = genCatCount();
+  else if(t === 'catOrder') current = genCatOrder();
+  else current = genCatSelect();
+  render();
+}
+function advance(){
+  if(testMode){
+    testIndex++;
+    if(testIndex >= TEST_LENGTH){ renderTestSummary(); return; }
+  }
+  nextQuestion();
+}
+
+// ---------- Rendering ----------
+
+function testHeaderHtml(){
+  if(!testMode) return '';
+  return '<div class="testHeader">Kurztest · Frage ' + (testIndex+1) + '/' + TEST_LENGTH + ' · ' + testScore + ' richtig</div>';
+}
+function render(){
+  const card = document.getElementById('card');
+  card.innerHTML = testHeaderHtml();
+  if(current.type === 'pair') renderPair(card);
+  else if(current.type === 'gap') renderGap(card);
+  else if(current.type === 'order') renderOrder(card);
+  else if(current.type === 'catBool') renderCatBool(card);
+  else if(current.type === 'catCount') renderCatCount(card);
+  else if(current.type === 'catOrder') renderCatOrder(card);
+  else renderCatSelect(card);
+}
+function addLabel(card, text){
+  const label = document.createElement('div');
+  label.className = 'qtype';
+  label.textContent = text;
+  card.appendChild(label);
+}
+function addQ(card, text){
+  const q = document.createElement('div');
+  q.className = 'qtext';
+  q.textContent = text;
+  card.appendChild(q);
+}
+function addFb(card){
+  const fb = document.createElement('div');
+  fb.className = 'feedback';
+  card.appendChild(fb);
+  return fb;
+}
+function buildNextButton(){
+  const next = document.createElement('button');
+  next.className = 'primary';
+  next.textContent = 'Weiter';
+  next.onclick = () => advance();
+  return next;
+}
+function buildActionRow(){
+  const row = document.createElement('div');
+  row.className = 'actionRow';
+  row.appendChild(buildNextButton());
+  return row;
+}
+
+function renderPair(card){
+  addLabel(card, 'Reihenfolge');
+  addQ(card, 'Was kommt in der Bibel zuerst?');
+  const fb = addFb(card);
+  const row = document.createElement('div');
+  row.className = 'pairRow';
+  [current.left, current.right].forEach(fam=>{
+    const el = document.createElement('div');
+    el.className = 'opt';
+    el.textContent = FAMILIES[fam].label;
+    el.onclick = () => {
+      if(answered) return;
+      answered = true;
+      const correctFam = Math.min(current.left, current.right);
+      const wrongFam = Math.max(current.left, current.right);
+      const isRight = fam === correctFam;
+      el.classList.add(isRight ? 'correct' : 'wrong');
+      row.querySelectorAll('.opt').forEach(o=>o.classList.add('disabled'));
+      if(!isRight){ [...row.children].forEach(o=>{ if(o.textContent === FAMILIES[correctFam].label) o.classList.add('correct'); }); }
+      fb.className = 'feedback ' + (isRight ? 'good' : 'bad');
+      fb.textContent = (isRight ? 'Richtig — ' : 'Nicht ganz — ') + FAMILIES[correctFam].label + ' steht vor ' + FAMILIES[wrongFam].label + '.';
+      registerResult(FAMILIES[current.left].ids.concat(FAMILIES[current.right].ids), isRight);
+    };
+    row.appendChild(el);
+  });
+  card.appendChild(row);
+  card.appendChild(buildActionRow());
+}
+
+function renderGap(card){
+  addLabel(card, 'Lückentext');
+  addQ(card, 'Was fehlt in der Reihe?');
+  const fb = addFb(card);
+  const seq = document.createElement('div');
+  seq.className = 'seqLine';
+  const parts = current.windowIdx.map((fam,pos)=>{
+    if(pos === current.blankPos) return '<span class="blank" id="blankSpan">?</span>';
+    return '<span class="known">' + FAMILIES[fam].label + '</span>';
+  });
+  seq.innerHTML = parts.join(' — ');
+  card.appendChild(seq);
+  const opts = document.createElement('div');
+  opts.className = 'options';
+  current.options.forEach(fam=>{
+    const el = document.createElement('div');
+    el.className = 'opt';
+    el.textContent = FAMILIES[fam].label;
+    el.onclick = () => {
+      if(answered) return;
+      answered = true;
+      const isRight = fam === current.blankFam;
+      el.classList.add(isRight ? 'correct' : 'wrong');
+      opts.querySelectorAll('.opt').forEach(o=>o.classList.add('disabled'));
+      if(!isRight){ [...opts.children].forEach(o=>{ if(o.textContent === FAMILIES[current.blankFam].label) o.classList.add('correct'); }); }
+      document.getElementById('blankSpan').textContent = FAMILIES[current.blankFam].label;
+      fb.className = 'feedback ' + (isRight ? 'good' : 'bad');
+      fb.textContent = isRight ? 'Richtig!' : 'Es ist ' + FAMILIES[current.blankFam].label + '.';
+      registerResult(FAMILIES[current.blankFam].ids, isRight);
+    };
+    opts.appendChild(el);
+  });
+  card.appendChild(opts);
+  card.appendChild(buildActionRow());
+}
+
+function renderOrder(card){
+  addLabel(card, 'Sortieren');
+  addQ(card, 'Tippe in der richtigen biblischen Reihenfolge an.');
+  const fb = addFb(card);
+  const slots = document.createElement('div');
+  slots.className = 'answerSlots';
+  card.appendChild(slots);
+  const chips = document.createElement('div');
+  chips.className = 'chipsRow';
+  current.shuffled.forEach(fam=>{
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    chip.textContent = FAMILIES[fam].label;
+    chip.onclick = () => {
+      if(answered || current.placed.includes(fam)) return;
+      current.placed.push(fam);
+      chip.classList.add('used');
+      renderSlots(slots);
+      if(current.placed.length === current.fams.length) checkOrder(fb);
+    };
+    chips.appendChild(chip);
+  });
+  card.appendChild(chips);
+  const resetSel = document.createElement('button');
+  resetSel.className = 'ghost';
+  resetSel.textContent = 'Auswahl zurücksetzen';
+  resetSel.style.marginBottom = '10px';
+  resetSel.onclick = () => {
+    if(answered) return;
+    current.placed = [];
+    chips.querySelectorAll('.chip').forEach(c=>c.classList.remove('used'));
+    renderSlots(slots);
+  };
+  card.appendChild(resetSel);
+  renderSlots(slots);
+  card.appendChild(buildActionRow());
+}
+function renderSlots(slots){
+  slots.innerHTML = '';
+  current.placed.forEach((fam,pos)=>{
+    const s = document.createElement('div');
+    s.className = 'slot';
+    s.innerHTML = '<span class="n">' + (pos+1) + '</span><span>' + FAMILIES[fam].label + '</span>';
+    slots.appendChild(s);
+  });
+}
+function checkOrder(fb){
+  answered = true;
+  const sortedCorrect = [...current.fams].sort((a,b)=>a-b);
+  const isRight = current.placed.every((v,i)=>v===sortedCorrect[i]);
+  const slots = document.querySelectorAll('.slot');
+  current.placed.forEach((fam,i)=>{ slots[i].classList.add(fam === sortedCorrect[i] ? 'correct' : 'wrong'); });
+  fb.className = 'feedback ' + (isRight ? 'good' : 'bad');
+  fb.textContent = isRight ? 'Richtig sortiert!' : 'Richtige Reihenfolge: ' + sortedCorrect.map(f=>FAMILIES[f].label).join(' — ');
+  const allIds = [];
+  current.fams.forEach(f => allIds.push(...FAMILIES[f].ids));
+  registerResult(allIds, isRight);
+}
+
+function renderCatBool(card){
+  addLabel(card, 'Kategorie');
+  addQ(card, 'Gehört ' + BOOKS[current.idx] + ' zu den ' + current.statementCat.name + '?');
+  const fb = addFb(card);
+  const row = document.createElement('div');
+  row.className = 'pairRow';
+  ['Ja','Nein'].forEach(lbl=>{
+    const el = document.createElement('div');
+    el.className = 'opt';
+    el.textContent = lbl;
+    el.onclick = () => {
+      if(answered) return;
+      answered = true;
+      const answeredTrue = lbl === 'Ja';
+      const isRight = answeredTrue === current.isTrue;
+      const trueCat = categoryOf(current.idx);
+      el.classList.add(isRight ? 'correct' : 'wrong');
+      row.querySelectorAll('.opt').forEach(o=>o.classList.add('disabled'));
+      fb.className = 'feedback ' + (isRight ? 'good' : 'bad');
+      fb.textContent = isRight ? 'Richtig!' : (BOOKS[current.idx] + ' gehört zu den ' + trueCat.name + '.');
+      registerResult([current.idx], isRight);
+    };
+    row.appendChild(el);
+  });
+  card.appendChild(row);
+  card.appendChild(buildActionRow());
+}
+
+function renderCatCount(card){
+  addLabel(card, 'Kategorie · Anzahl');
+  addQ(card, 'Wie viele Bücher gehören zu den ' + current.cat.name + '?');
+  const fb = addFb(card);
+  const opts = document.createElement('div');
+  opts.className = 'options';
+  current.options.forEach(val=>{
+    const el = document.createElement('div');
+    el.className = 'opt';
+    el.textContent = val;
+    el.onclick = () => {
+      if(answered) return;
+      answered = true;
+      const isRight = val === current.correct;
+      el.classList.add(isRight ? 'correct' : 'wrong');
+      opts.querySelectorAll('.opt').forEach(o=>o.classList.add('disabled'));
+      if(!isRight){ [...opts.children].forEach(o=>{ if(parseInt(o.textContent,10)===current.correct) o.classList.add('correct'); }); }
+      fb.className = 'feedback ' + (isRight ? 'good' : 'bad');
+      fb.textContent = isRight ? 'Richtig!' : ('Es sind ' + current.correct + '.');
+      registerResult(categoryMembers(current.cat), isRight);
+    };
+    opts.appendChild(el);
+  });
+  card.appendChild(opts);
+  card.appendChild(buildActionRow());
+}
+
+function renderCatOrder(card){
+  addLabel(card, 'Kategorie · Reihenfolge');
+  addQ(card, 'Welche Kategorie kommt in der Bibel zuerst?');
+  const fb = addFb(card);
+  const row = document.createElement('div');
+  row.className = 'pairRow';
+  [current.left, current.right].forEach(catIdx=>{
+    const el = document.createElement('div');
+    el.className = 'opt';
+    el.textContent = CATEGORIES[catIdx].name;
+    el.onclick = () => {
+      if(answered) return;
+      answered = true;
+      const correctCat = Math.min(current.left, current.right);
+      const wrongCat = Math.max(current.left, current.right);
+      const isRight = catIdx === correctCat;
+      el.classList.add(isRight ? 'correct' : 'wrong');
+      row.querySelectorAll('.opt').forEach(o=>o.classList.add('disabled'));
+      if(!isRight){ [...row.children].forEach(o=>{ if(o.textContent === CATEGORIES[correctCat].name) o.classList.add('correct'); }); }
+      fb.className = 'feedback ' + (isRight ? 'good' : 'bad');
+      fb.textContent = (isRight ? 'Richtig — ' : 'Nicht ganz — ') + CATEGORIES[correctCat].name + ' stehen vor ' + CATEGORIES[wrongCat].name + '.';
+      registerResult(categoryMembers(CATEGORIES[current.left]).concat(categoryMembers(CATEGORIES[current.right])), isRight);
+    };
+    row.appendChild(el);
+  });
+  card.appendChild(row);
+  card.appendChild(buildActionRow());
+}
+
+function renderCatSelect(card){
+  addLabel(card, 'Kategorie · Auswahl');
+  addQ(card, 'Welche dieser Bücher gehören zu den ' + current.cat.name + '?');
+  const fb = addFb(card);
+  const chips = document.createElement('div');
+  chips.className = 'chipsRow';
+  current.candidates.forEach(c=>{
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    chip.textContent = BOOKS[c.idx];
+    chip.onclick = () => {
+      if(answered) return;
+      if(current.selected.has(c.idx)){
+        current.selected.delete(c.idx);
+        chip.style.background = ''; chip.style.borderColor = '';
+      } else {
+        current.selected.add(c.idx);
+        chip.style.background = 'var(--gold-soft)'; chip.style.borderColor = 'var(--gold)';
+      }
+    };
+    chips.appendChild(chip);
+  });
+  card.appendChild(chips);
+  const row = document.createElement('div');
+  row.className = 'actionRow';
+  const checkBtn = document.createElement('button');
+  checkBtn.className = 'primary';
+  checkBtn.textContent = 'Prüfen';
+  checkBtn.onclick = () => {
+    if(answered) return;
+    answered = true;
+    const perItem = current.candidates.map(c => ({ idx:c.idx, correct: current.selected.has(c.idx) === c.belongs }));
+    const overallCorrect = perItem.every(p=>p.correct);
+    [...chips.children].forEach((chipEl,i)=>{
+      const c = current.candidates[i];
+      const wasSelected = current.selected.has(c.idx);
+      chipEl.style.pointerEvents = 'none';
+      if(c.belongs){
+        chipEl.style.borderColor = 'var(--green)';
+        chipEl.style.background = wasSelected ? 'var(--green-soft)' : '#fff';
+      } else {
+        if(wasSelected){ chipEl.style.borderColor = 'var(--red)'; chipEl.style.background = 'var(--red-soft)'; }
+        else { chipEl.style.borderColor = 'var(--rule)'; chipEl.style.background = ''; }
+      }
+    });
+    fb.className = 'feedback ' + (overallCorrect ? 'good' : 'bad');
+    const belongList = current.candidates.filter(c=>c.belongs).map(c=>BOOKS[c.idx]);
+    fb.textContent = overallCorrect ? 'Richtig!' : ('Dazu gehören: ' + (belongList.length ? belongList.join(', ') : 'keines der gezeigten Bücher') + '.');
+    _finishQuestion(overallCorrect, perItem);
+    row.innerHTML = '';
+    row.appendChild(buildNextButton());
+  };
+  row.appendChild(checkBtn);
+  card.appendChild(row);
+}
+
+function renderTestSummary(){
+  const card = document.getElementById('card');
+  card.innerHTML = '';
+  addLabel(card, 'Kurztest beendet');
+  const score = document.createElement('div');
+  score.className = 'summaryScore';
+  score.textContent = testScore + ' / ' + TEST_LENGTH;
+  card.appendChild(score);
+  const line = document.createElement('div');
+  line.className = 'summaryLine';
+  const pct = Math.round((testScore/TEST_LENGTH)*100);
+  line.textContent = pct >= 80 ? 'Sehr gut!' : (pct >= 50 ? 'Solide — weiter üben lohnt sich.' : 'Diese Bücher brauchen noch etwas Übung.');
+  card.appendChild(line);
+  const back = document.createElement('button');
+  back.className = 'primary';
+  back.textContent = 'Zurück zum Übungsmodus';
+  back.onclick = () => { testMode = false; nextQuestion(); };
+  card.appendChild(back);
+}
+
+document.getElementById('testBtn').onclick = () => {
+  testMode = true; testIndex = 0; testScore = 0;
+  nextQuestion();
+};
+document.getElementById('resetBtn').onclick = async () => {
+  if(!confirm('Deinen gesamten Fortschritt wirklich zurücksetzen?')) return;
+  weights = new Array(N).fill(6);
+  stats = {totalAnswered:0, totalCorrect:0, currentStreak:0, bestStreak:0};
+  testMode = false;
+  await saveProgress();
+  renderShelf();
+  renderStats();
+  nextQuestion();
+};
+
+(async function init(){
+  await loadProgress();
+  renderShelf();
+  renderStats();
+  nextQuestion();
+})();
+</script>
+</body>
+</html>
