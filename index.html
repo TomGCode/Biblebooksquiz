@@ -561,7 +561,7 @@ function genGap(){
 
 function genOrder(){
   const base = weightedFamilyIndex();
-  const count = Math.random()<0.5 ? 4 : 5;
+  const count = Math.floor(Math.random() * 4) + 3;
   const span = 9;
   const len = FAMILIES.length;
   const isAT = FAMILIES[base].testament === 'AT';
