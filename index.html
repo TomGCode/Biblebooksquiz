@@ -82,7 +82,7 @@
   .dot.mid{background:#B9AF98;}
   .dot.red{background:var(--red);}
 
-  .testBar{display:flex;justify-content:center;margin-bottom:14px;}
+  .testBar{display:flex;justify-content:center;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
   button.testStart{
     font-family:var(--sans);
     font-size:12.5px;
@@ -93,6 +93,37 @@
     border-radius:20px;
     cursor:pointer;
   }
+  .settingsPanel{
+    background:#fff;
+    border:1px solid var(--rule);
+    border-radius:6px;
+    padding:6px 16px;
+    margin-bottom:14px;
+  }
+  .settingsRow{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:10px 0;
+    border-bottom:1px solid var(--paper-2);
+    font-size:14px;
+    font-family:var(--sans);
+  }
+  .settingsRow:last-child{border-bottom:none;}
+  .toggle{
+    width:38px;height:22px;border-radius:12px;
+    background:var(--rule);
+    position:relative;cursor:pointer;
+    transition:background 0.2s ease;
+    flex-shrink:0;
+  }
+  .toggle.on{background:var(--green);}
+  .toggle::after{
+    content:'';position:absolute;top:2px;left:2px;
+    width:18px;height:18px;border-radius:50%;
+    background:#fff;transition:left 0.2s ease;
+  }
+  .toggle.on::after{left:18px;}
 
   .card{
     background:#fff;
@@ -266,7 +297,9 @@
   </div>
   <div class="testBar">
     <button class="testStart" id="testBtn">Kurztest starten (10 Fragen)</button>
+    <button class="testStart" id="settingsBtn">Fragetypen</button>
   </div>
+  <div class="settingsPanel" id="settingsPanel" style="display:none;"></div>
 
   <div class="card" id="card"></div>
 
@@ -332,6 +365,56 @@ CATEGORIES.forEach(c => c.testament = c.start < 39 ? 'AT' : 'NT');
 const CATEGORY_EXCLUDED = [43, 65]; // Apostelgeschichte, Offenbarung — keine Kategorie-Fragen dazu
 function categoryOf(idx){ return CATEGORIES.find(c => idx>=c.start && idx<=c.end); }
 function categoryMembers(cat){ const arr=[]; for(let i=cat.start;i<=cat.end;i++) arr.push(i); return arr; }
+
+const TYPE_LABELS = {
+  pair:'Reihenfolge', gap:'Lückentext', order:'Sortieren',
+  catBool:'Kategorie (Ja/Nein)', catCount:'Kategorie · Anzahl',
+  catOrder:'Kategorie · Reihenfolge', catSelect:'Kategorie · Auswahl'
+};
+const TYPE_WEIGHTS = { pair:2, gap:3, order:3, catBool:2, catCount:1, catOrder:1, catSelect:1 };
+const TYPE_KEYS = Object.keys(TYPE_LABELS);
+let enabledTypes = { pair:true, gap:true, order:true, catBool:false, catCount:false, catOrder:false, catSelect:false };
+
+function loadTypeSettings(){
+  try{
+    const raw = localStorage.getItem('bibleQuizTypesEnabled');
+    if(raw){
+      const parsed = JSON.parse(raw);
+      TYPE_KEYS.forEach(k => { if(typeof parsed[k] === 'boolean') enabledTypes[k] = parsed[k]; });
+    }
+  }catch(e){}
+}
+function saveTypeSettings(){
+  try{ localStorage.setItem('bibleQuizTypesEnabled', JSON.stringify(enabledTypes)); }catch(e){}
+}
+function renderSettingsPanel(){
+  const panel = document.getElementById('settingsPanel');
+  panel.innerHTML = '';
+  TYPE_KEYS.forEach(key=>{
+    const row = document.createElement('div');
+    row.className = 'settingsRow';
+    const label = document.createElement('span');
+    label.textContent = TYPE_LABELS[key];
+    const toggle = document.createElement('div');
+    toggle.className = 'toggle' + (enabledTypes[key] ? ' on' : '');
+    toggle.onclick = () => {
+      const enabledCount = TYPE_KEYS.filter(k=>enabledTypes[k]).length;
+      if(enabledTypes[key] && enabledCount <= 1) return;
+      enabledTypes[key] = !enabledTypes[key];
+      saveTypeSettings();
+      renderSettingsPanel();
+    };
+    row.appendChild(label);
+    row.appendChild(toggle);
+    panel.appendChild(row);
+  });
+}
+function buildBag(){
+  let bag = [];
+  TYPE_KEYS.forEach(t=>{ if(enabledTypes[t]){ for(let i=0;i<TYPE_WEIGHTS[t];i++) bag.push(t); } });
+  if(bag.length === 0) bag = ['pair'];
+  return bag;
+}
 
 let weights = new Array(N).fill(6);
 let stats = {totalAnswered:0, totalCorrect:0, currentStreak:0, bestStreak:0};
@@ -573,7 +656,7 @@ function genCatSelect(){
 
 function nextQuestion(){
   answered = false;
-  const bag = ['pair','pair','gap','gap','gap','order','order','order','catBool','catBool','catCount','catOrder','catSelect'];
+  const bag = buildBag();
   const t = bag[Math.floor(Math.random()*bag.length)];
   if(t === 'pair') current = genPair();
   else if(t === 'gap') current = genGap();
@@ -925,6 +1008,12 @@ function renderTestSummary(){
   card.appendChild(back);
 }
 
+document.getElementById('settingsBtn').onclick = () => {
+  const panel = document.getElementById('settingsPanel');
+  const showing = panel.style.display !== 'none';
+  panel.style.display = showing ? 'none' : 'block';
+  if(!showing) renderSettingsPanel();
+};
 document.getElementById('testBtn').onclick = () => {
   testMode = true; testIndex = 0; testScore = 0;
   nextQuestion();
@@ -941,6 +1030,7 @@ document.getElementById('resetBtn').onclick = async () => {
 };
 
 (async function init(){
+  loadTypeSettings();
   await loadProgress();
   renderShelf();
   renderStats();
