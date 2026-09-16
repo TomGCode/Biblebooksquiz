@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>66 — Die Reihenfolge der Bibel</title>
+<title>Die Reihenfolge der biblischen Bücher</title>
 <style>
   :root{
     --paper: #EFEAE0;
@@ -34,27 +34,28 @@
   .app{width:100%;max-width:440px;}
 
   header{text-align:center;margin-bottom:18px;}
-  header .num{
+  header .title{
     font-family:var(--serif);
-    font-size:44px;
-    line-height:1;
-    letter-spacing:1px;
+    font-size:26px;
+    line-height:1.25;
+    letter-spacing:0.2px;
     color:var(--ink);
   }
-  header .sub{
-    font-size:13.5px;
-    color:var(--ink-soft);
-    margin-top:4px;
-  }
 
+  .shelfGroup{margin-bottom:10px;}
+  .shelfLabel{
+    font-size:10px;
+    color:var(--ink-soft);
+    letter-spacing:0.3px;
+    margin-bottom:5px;
+  }
   .shelf{
     display:flex;
     flex-wrap:wrap;
-    gap:2px;
+    gap:7px 3px;
     padding:10px;
     background:var(--paper-2);
     border-radius:4px;
-    margin-bottom:8px;
   }
   .spine{
     width:5.2px;
@@ -192,7 +193,7 @@
   .slot.correct{color:var(--green);}
   .slot.wrong{color:var(--red);}
 
-  .actionRow{display:flex;gap:10px;margin-top:auto;}
+  .actionRow{display:flex;gap:10px;margin-top:20px;}
   button.primary{
     font-family:var(--sans);
     font-size:14.5px;
@@ -247,11 +248,17 @@
 <body>
 <div class="app">
   <header>
-    <div class="num">66</div>
-    <div class="sub">Die Reihenfolge der biblischen Bücher</div>
+    <div class="title">Die Reihenfolge der biblischen Bücher</div>
   </header>
 
-  <div class="shelf" id="shelf"></div>
+  <div class="shelfGroup">
+    <div class="shelfLabel">Altes Testament</div>
+    <div class="shelf" id="shelfAT"></div>
+  </div>
+  <div class="shelfGroup">
+    <div class="shelfLabel">Neues Testament</div>
+    <div class="shelf" id="shelfNT"></div>
+  </div>
   <div class="legend">
     <span><span class="dot mid"></span>offen</span>
     <span><span class="dot green"></span>sicher</span>
@@ -267,6 +274,7 @@
     <span id="statLine">Serie: 0 · Richtig: 0/0</span>
     <button class="resetLink" id="resetBtn">Fortschritt zurücksetzen</button>
   </footer>
+  <div id="storageStatus" style="font-size:10.5px;color:var(--ink-soft);text-align:center;margin-top:8px;">Speicherstatus wird geprüft …</div>
 </div>
 
 <script>
@@ -332,13 +340,34 @@ let answered = false;
 let testMode = false, testIndex = 0, testScore = 0;
 const TEST_LENGTH = 10;
 
-async function loadProgress(){
-  try{ const w = await window.storage.get('bible-quiz-weights', false); if(w) weights = JSON.parse(w.value); }catch(e){}
-  try{ const s = await window.storage.get('bible-quiz-stats', false); if(s) stats = JSON.parse(s.value); }catch(e){}
+const STORAGE_KEY_WEIGHTS = 'bibleQuizWeights';
+const STORAGE_KEY_STATS = 'bibleQuizStats';
+
+function setStorageStatus(text){
+  const el = document.getElementById('storageStatus');
+  if(el) el.textContent = text;
 }
-async function saveProgress(){
-  try{ await window.storage.set('bible-quiz-weights', JSON.stringify(weights), false); }catch(e){}
-  try{ await window.storage.set('bible-quiz-stats', JSON.stringify(stats), false); }catch(e){}
+
+function loadProgress(){
+  try{
+    const w = localStorage.getItem(STORAGE_KEY_WEIGHTS);
+    const s = localStorage.getItem(STORAGE_KEY_STATS);
+    if(w) weights = JSON.parse(w);
+    if(s) stats = JSON.parse(s);
+    setStorageStatus((w || s) ? 'Vorheriger Fortschritt geladen ✓' : 'Kein gespeicherter Fortschritt gefunden (erster Start auf diesem Gerät/Browser).');
+  }catch(e){
+    setStorageStatus('⚠️ Laden fehlgeschlagen: ' + (e && e.message ? e.message : String(e)));
+  }
+}
+
+function saveProgress(){
+  try{
+    localStorage.setItem(STORAGE_KEY_WEIGHTS, JSON.stringify(weights));
+    localStorage.setItem(STORAGE_KEY_STATS, JSON.stringify(stats));
+    setStorageStatus('Gespeichert ✓ · ' + new Date().toLocaleTimeString());
+  }catch(e){
+    setStorageStatus('⚠️ Speichern fehlgeschlagen: ' + (e && e.message ? e.message : String(e)) + ' — bitte "Fortschritt exportieren" als Sicherung nutzen.');
+  }
 }
 
 function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
@@ -384,8 +413,10 @@ function registerResult(bookIndices, correct){
 }
 
 function renderShelf(pulseIndices){
-  const shelf = document.getElementById('shelf');
-  shelf.innerHTML = '';
+  const shelfAT = document.getElementById('shelfAT');
+  const shelfNT = document.getElementById('shelfNT');
+  shelfAT.innerHTML = '';
+  shelfNT.innerHTML = '';
   for(let i=0;i<N;i++){
     const d = document.createElement('div');
     let cls = 'spine mid';
@@ -394,7 +425,7 @@ function renderShelf(pulseIndices){
     if(pulseIndices && pulseIndices.includes(i)) cls += ' pulse';
     d.className = cls;
     d.title = BOOKS[i];
-    shelf.appendChild(d);
+    (i < 39 ? shelfAT : shelfNT).appendChild(d);
   }
 }
 function renderStats(){
