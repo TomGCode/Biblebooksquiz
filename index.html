@@ -369,11 +369,23 @@ function categoryMembers(cat){ const arr=[]; for(let i=cat.start;i<=cat.end;i++)
 const TYPE_LABELS = {
   pair:'Reihenfolge', gap:'Lückentext', order:'Sortieren',
   catBool:'Kategorie (Ja/Nein)', catCount:'Kategorie · Anzahl',
-  catOrder:'Kategorie · Reihenfolge', catSelect:'Kategorie · Auswahl'
+  catOrder:'Kategorie · Reihenfolge', catSelect:'Kategorie · Auswahl',
+  author:'Autor', history:'Biblische Geschichte'
 };
-const TYPE_WEIGHTS = { pair:2, gap:3, order:3, catBool:2, catCount:1, catOrder:1, catSelect:1 };
+const TYPE_DESCRIPTIONS = {
+  pair:'Zwei Bücher/Gruppen — welches kommt zuerst?',
+  gap:'Fehlendes Buch in einer 3er-Reihe ergänzen (Lücke an unterschiedlicher Stelle).',
+  order:'4–5 Bücher/Gruppen (oder 3 direkt aufeinanderfolgende) in die richtige Reihenfolge bringen.',
+  catBool:'Ja/Nein: Gehört dieses Buch zu dieser Kategorie?',
+  catCount:'Wie viele Bücher gehören zu einer Kategorie?',
+  catOrder:'Welche Kategorie kommt in der Bibel zuerst?',
+  catSelect:'Aus 5 Büchern die auswählen, die zur genannten Kategorie gehören.',
+  author:'Wem wird ein Buch traditionell als Autor zugeschrieben?',
+  history:'Ein Ereignis wird beschrieben — in welchem Buch steht es?'
+};
+const TYPE_WEIGHTS = { pair:2, gap:3, order:3, catBool:2, catCount:1, catOrder:1, catSelect:1, author:1, history:1 };
 const TYPE_KEYS = Object.keys(TYPE_LABELS);
-let enabledTypes = { pair:true, gap:true, order:true, catBool:false, catCount:false, catOrder:false, catSelect:false };
+let enabledTypes = { pair:true, gap:true, order:true, catBool:false, catCount:false, catOrder:false, catSelect:false, author:false, history:false };
 
 function loadTypeSettings(){
   try{
@@ -393,8 +405,21 @@ function renderSettingsPanel(){
   TYPE_KEYS.forEach(key=>{
     const row = document.createElement('div');
     row.className = 'settingsRow';
+    const textCol = document.createElement('div');
+    textCol.style.display = 'flex';
+    textCol.style.flexDirection = 'column';
+    textCol.style.gap = '2px';
+    textCol.style.paddingRight = '10px';
     const label = document.createElement('span');
     label.textContent = TYPE_LABELS[key];
+    const desc = document.createElement('span');
+    desc.textContent = TYPE_DESCRIPTIONS[key] || '';
+    desc.style.fontSize = '11.5px';
+    desc.style.color = 'var(--ink-soft)';
+    desc.style.fontFamily = 'var(--serif)';
+    desc.style.fontStyle = 'italic';
+    textCol.appendChild(label);
+    textCol.appendChild(desc);
     const toggle = document.createElement('div');
     toggle.className = 'toggle' + (enabledTypes[key] ? ' on' : '');
     toggle.onclick = () => {
@@ -404,7 +429,7 @@ function renderSettingsPanel(){
       saveTypeSettings();
       renderSettingsPanel();
     };
-    row.appendChild(label);
+    row.appendChild(textCol);
     row.appendChild(toggle);
     panel.appendChild(row);
   });
@@ -536,9 +561,10 @@ function genPair(){
 function genGap(){
   const center = weightedFamilyIndex();
   const len = FAMILIES.length;
-  const start = clamp(center-1, 0, len-3);
+  const desiredPos = Math.floor(Math.random()*3); // 0=Anfang, 1=Mitte, 2=Ende
+  const start = clamp(center - desiredPos, 0, len-3);
   const windowIdx = [start, start+1, start+2];
-  const blankPos = windowIdx.includes(center) ? windowIdx.indexOf(center) : 1;
+  const blankPos = windowIdx.includes(center) ? windowIdx.indexOf(center) : desiredPos;
   const blankFam = windowIdx[blankPos];
   let pool = [];
   for(let i=0;i<len;i++){
@@ -561,7 +587,7 @@ function genGap(){
 
 function genOrder(){
   const base = weightedFamilyIndex();
-  const count = Math.floor(Math.random() * 4) + 3;
+  const count = Math.random()<0.5 ? 4 : 5;
   const span = 9;
   const len = FAMILIES.length;
   const isAT = FAMILIES[base].testament === 'AT';
@@ -579,6 +605,26 @@ function genOrder(){
     set.add(pool[Math.floor(Math.random()*pool.length)]);
   }
   const fams = [...set].sort((a,b)=>a-b);
+  const shuffled = [...fams];
+  for(let i=shuffled.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [shuffled[i],shuffled[j]] = [shuffled[j],shuffled[i]];
+  }
+  return { type:'order', fams, shuffled, placed: [] };
+}
+
+// Variante: genau drei unmittelbar aufeinanderfolgende Bücher/Gruppen sortieren
+// (wie ein Lückentext, nur dass alle drei verdeckt und in die richtige Reihenfolge zu bringen sind)
+function genOrderSeq(){
+  const center = weightedFamilyIndex();
+  const len = FAMILIES.length;
+  const isAT = FAMILIES[center].testament === 'AT';
+  const rangeLo = isAT ? 0 : NT_START;
+  const rangeHi = isAT ? AT_END : len-1;
+  let start = clamp(center-1, rangeLo, rangeHi-2);
+  if(start < rangeLo) start = rangeLo;
+  if(start+2 > rangeHi) start = rangeHi-2;
+  const fams = [start, start+1, start+2];
   const shuffled = [...fams];
   for(let i=shuffled.length-1;i>0;i--){
     const j = Math.floor(Math.random()*(i+1));
@@ -626,6 +672,79 @@ function genCatOrder(){
   return { type:'catOrder', left: order[0], right: order[1] };
 }
 
+// Traditionelle Autoren-Zuschreibung (nicht überall historisch gesichert, aber gängige Lehrmeinung).
+// Bücher mit stark umstrittener/unbekannter Verfasserschaft bleiben bei null und fliegen aus dieser Frage raus.
+const AUTHORS = [
+  'Mose','Josua',null,null,null,null,'Esra','Esra','Nehemia',null,null,
+  'David','Salomo','Salomo','Salomo','Jesaja','Jeremia','Jeremia','Hesekiel','Daniel',
+  'Hosea','Joel','Amos','Obadja','Jona','Micha','Nahum','Habakuk','Zefanja','Haggai','Sacharja','Maleachi',
+  'Matthäus','Markus','Lukas','Johannes','Lukas','Paulus','Paulus','Paulus','Paulus','Paulus','Paulus',
+  'Paulus','Paulus','Paulus','Paulus',null,'Jakobus','Petrus','Johannes','Judas','Johannes'
+];
+
+const EVENTS = [
+  {text:"Gott erschafft Himmel und Erde in sieben Tagen.", fam:0},
+  {text:"Noah baut die Arche vor der großen Flut.", fam:0},
+  {text:"Der Turmbau zu Babel und die Sprachverwirrung.", fam:0},
+  {text:"Josef wird von seinen Brüdern nach Ägypten verkauft.", fam:0},
+  {text:"Der brennende Dornbusch und Moses Berufung.", fam:0},
+  {text:"Die zehn Plagen kommen über Ägypten.", fam:0},
+  {text:"Das Rote Meer teilt sich für die Israeliten.", fam:0},
+  {text:"Die Zehn Gebote werden am Berg Sinai gegeben.", fam:0},
+  {text:"Die Mauern von Jericho stürzen ein.", fam:1},
+  {text:"Simson verliert seine Kraft durch Delila.", fam:2},
+  {text:"Rut bleibt bei ihrer Schwiegermutter Noomi.", fam:3},
+  {text:"David besiegt den Riesen Goliat.", fam:4},
+  {text:"Salomo baut den Tempel in Jerusalem.", fam:5},
+  {text:"Elia fordert die Baalspriester auf dem Berg Karmel heraus.", fam:5},
+  {text:"Königin Ester rettet ihr Volk vor der Vernichtung.", fam:9},
+  {text:"Daniel übersteht eine Nacht in der Löwengrube.", fam:19},
+  {text:"Drei Männer überleben unversehrt den Feuerofen.", fam:19},
+  {text:"Jona wird von einem großen Fisch verschluckt.", fam:24},
+  {text:"Die Bergpredigt mit den Seligpreisungen.", fam:32},
+  {text:"Jesus verwandelt bei einer Hochzeit Wasser zu Wein.", fam:35},
+  {text:"Der ungläubige Thomas will die Wunden Jesu berühren.", fam:35},
+  {text:"Das Gleichnis vom verlorenen Sohn.", fam:34},
+  {text:"Das Gleichnis vom barmherzigen Samariter.", fam:34},
+  {text:"Die Bekehrung des Saulus vor Damaskus.", fam:36},
+  {text:"Die Ausgießung des Heiligen Geistes an Pfingsten.", fam:36},
+  {text:"Stephanus wird als erster Märtyrer gesteinigt.", fam:36},
+  {text:"Paulus erleidet Schiffbruch auf dem Weg nach Rom.", fam:36},
+  {text:"Die vier apokalyptischen Reiter erscheinen.", fam:52},
+  {text:"Sieben Sendschreiben an die Gemeinden Kleinasiens.", fam:52}
+];
+
+function shuffleArr(arr){
+  for(let i=arr.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]] = [arr[j],arr[i]];
+  }
+  return arr;
+}
+
+function genAuthor(){
+  const eligible = FAMILIES.map((f,i)=>i).filter(i => AUTHORS[i] !== null);
+  const w = eligible.map(i => familyWeight(FAMILIES[i]));
+  const famIdx = eligible[weightedIndex(w)];
+  const correctAuthor = AUTHORS[famIdx];
+  const testament = FAMILIES[famIdx].testament;
+  const pool = [...new Set(eligible.filter(i => FAMILIES[i].testament === testament && AUTHORS[i] !== correctAuthor).map(i => AUTHORS[i]))];
+  shuffleArr(pool);
+  const options = shuffleArr([correctAuthor, ...pool.slice(0,2)]);
+  return { type:'author', famIdx, correctAuthor, options };
+}
+
+function genHistory(){
+  const w = EVENTS.map(e => familyWeight(FAMILIES[e.fam]));
+  const evIdx = weightedIndex(w);
+  const ev = EVENTS[evIdx];
+  const testament = FAMILIES[ev.fam].testament;
+  const pool = FAMILIES.map((f,i)=>i).filter(i => i !== ev.fam && f.testament === testament);
+  shuffleArr(pool);
+  const options = shuffleArr([ev.fam, ...pool.slice(0,3)]);
+  return { type:'history', ev, options };
+}
+
 function genCatSelect(){
   const catIdx = weightedCategoryIndex();
   const cat = CATEGORIES[catIdx];
@@ -660,11 +779,13 @@ function nextQuestion(){
   const t = bag[Math.floor(Math.random()*bag.length)];
   if(t === 'pair') current = genPair();
   else if(t === 'gap') current = genGap();
-  else if(t === 'order') current = genOrder();
+  else if(t === 'order') current = Math.random() < 0.5 ? genOrderSeq() : genOrder();
   else if(t === 'catBool') current = genCatBool();
   else if(t === 'catCount') current = genCatCount();
   else if(t === 'catOrder') current = genCatOrder();
-  else current = genCatSelect();
+  else if(t === 'catSelect') current = genCatSelect();
+  else if(t === 'author') current = genAuthor();
+  else current = genHistory();
   render();
 }
 function advance(){
@@ -690,7 +811,9 @@ function render(){
   else if(current.type === 'catBool') renderCatBool(card);
   else if(current.type === 'catCount') renderCatCount(card);
   else if(current.type === 'catOrder') renderCatOrder(card);
-  else renderCatSelect(card);
+  else if(current.type === 'catSelect') renderCatSelect(card);
+  else if(current.type === 'author') renderAuthor(card);
+  else renderHistory(card);
 }
 function addLabel(card, text){
   const label = document.createElement('div');
@@ -986,6 +1109,67 @@ function renderCatSelect(card){
   };
   row.appendChild(checkBtn);
   card.appendChild(row);
+}
+
+function renderAuthor(card){
+  addLabel(card, 'Autor');
+  addQ(card, 'Wem wird ' + FAMILIES[current.famIdx].label + ' traditionell zugeschrieben?');
+  const fb = addFb(card);
+  const opts = document.createElement('div');
+  opts.className = 'options';
+  current.options.forEach(author=>{
+    const el = document.createElement('div');
+    el.className = 'opt';
+    el.textContent = author;
+    el.onclick = () => {
+      if(answered) return;
+      answered = true;
+      const isRight = author === current.correctAuthor;
+      el.classList.add(isRight ? 'correct' : 'wrong');
+      opts.querySelectorAll('.opt').forEach(o=>o.classList.add('disabled'));
+      if(!isRight){ [...opts.children].forEach(o=>{ if(o.textContent === current.correctAuthor) o.classList.add('correct'); }); }
+      fb.className = 'feedback ' + (isRight ? 'good' : 'bad');
+      fb.textContent = isRight ? 'Richtig!' : ('Traditionell zugeschrieben wird es ' + current.correctAuthor + '.');
+      registerResult(FAMILIES[current.famIdx].ids, isRight);
+    };
+    opts.appendChild(el);
+  });
+  card.appendChild(opts);
+  card.appendChild(buildActionRow());
+}
+
+function renderHistory(card){
+  addLabel(card, 'Biblische Geschichte');
+  addQ(card, current.ev.text);
+  const instr = document.createElement('div');
+  instr.style.fontSize = '13px';
+  instr.style.color = 'var(--ink-soft)';
+  instr.style.marginBottom = '14px';
+  instr.style.marginTop = '-10px';
+  instr.textContent = 'In welchem Buch geschieht das?';
+  card.appendChild(instr);
+  const fb = addFb(card);
+  const opts = document.createElement('div');
+  opts.className = 'options';
+  current.options.forEach(famIdx=>{
+    const el = document.createElement('div');
+    el.className = 'opt';
+    el.textContent = FAMILIES[famIdx].label;
+    el.onclick = () => {
+      if(answered) return;
+      answered = true;
+      const isRight = famIdx === current.ev.fam;
+      el.classList.add(isRight ? 'correct' : 'wrong');
+      opts.querySelectorAll('.opt').forEach(o=>o.classList.add('disabled'));
+      if(!isRight){ [...opts.children].forEach(o=>{ if(o.textContent === FAMILIES[current.ev.fam].label) o.classList.add('correct'); }); }
+      fb.className = 'feedback ' + (isRight ? 'good' : 'bad');
+      fb.textContent = isRight ? 'Richtig!' : ('Das steht in ' + FAMILIES[current.ev.fam].label + '.');
+      registerResult(FAMILIES[current.ev.fam].ids, isRight);
+    };
+    opts.appendChild(el);
+  });
+  card.appendChild(opts);
+  card.appendChild(buildActionRow());
 }
 
 function renderTestSummary(){
