@@ -373,14 +373,14 @@ const TYPE_LABELS = {
   author:'Autor', history:'Biblische Geschichte'
 };
 const TYPE_DESCRIPTIONS = {
-  pair:'Zwei Bücher/Gruppen — welches kommt zuerst?',
-  gap:'Fehlendes Buch in einer 3er-Reihe ergänzen (Lücke an unterschiedlicher Stelle).',
-  order:'4–5 Bücher/Gruppen (oder 3 direkt aufeinanderfolgende) in die richtige Reihenfolge bringen.',
+  pair:'Zwei Bücher — welches kommt zuerst?',
+  gap:'Fehlendes Buch in einer 3er-Reihe ergänzen.',
+  order:'3–6 Bücher in die richtige Reihenfolge bringen.',
   catBool:'Ja/Nein: Gehört dieses Buch zu dieser Kategorie?',
   catCount:'Wie viele Bücher gehören zu einer Kategorie?',
   catOrder:'Welche Kategorie kommt in der Bibel zuerst?',
   catSelect:'Aus 5 Büchern die auswählen, die zur genannten Kategorie gehören.',
-  author:'Wem wird ein Buch traditionell als Autor zugeschrieben?',
+  author:'Wem wird ein Buch (traditionell) als Autor zugeschrieben?',
   history:'Ein Ereignis wird beschrieben — in welchem Buch steht es?'
 };
 const TYPE_WEIGHTS = { pair:2, gap:3, order:3, catBool:2, catCount:1, catOrder:1, catSelect:1, author:1, history:1 };
@@ -672,7 +672,6 @@ function genCatOrder(){
 }
 
 // Traditionelle Autoren-Zuschreibung (nicht überall historisch gesichert, aber gängige Lehrmeinung).
-// Bücher mit stark umstrittener/unbekannter Verfasserschaft bleiben bei null und fliegen aus dieser Frage raus.
 const AUTHORS = [
   'Mose','Josua','Samuel','Samuel','Samuel','ungenannte Propheten','ungenannte Propheten','Esra','Nehemia','unbekannt','Mose',
   'David','Salomo','Salomo','Salomo','Jesaja','Jeremia','Jeremia','Hesekiel','Daniel',
@@ -842,16 +841,16 @@ function genAuthor(){
   return { type:'author', famIdx, correctAuthor, options };
 }
 
-function genHistory(){
-  const w = EVENTS.map(e => familyWeight(FAMILIES[e.fam]));
-  const evIdx = weightedIndex(w);
-  const ev = EVENTS[evIdx];
-  const testament = FAMILIES[ev.fam].testament;
-  const pool = FAMILIES.map((f,i)=>i).filter(i => i !== ev.fam && f.testament === testament);
-  shuffleArr(pool);
-  const options = shuffleArr([ev.fam, ...pool.slice(0,3)]);
-  return { type:'history', ev, options };
-}
+// function genHistory(){
+//   const w = EVENTS.map(e => familyWeight(FAMILIES[e.fam]));
+//   const evIdx = weightedIndex(w);
+//   const ev = EVENTS[evIdx];
+//   const testament = FAMILIES[ev.fam].testament;
+//   const pool = FAMILIES.map((f,i)=>i).filter(i => i !== ev.fam && f.testament === testament);
+//   shuffleArr(pool);
+//   const options = shuffleArr([ev.fam, ...pool.slice(0,3)]);
+//   return { type:'history', ev, options };
+// }
 
 function genCatSelect(){
   const catIdx = weightedCategoryIndex();
@@ -921,7 +920,7 @@ function render(){
   else if(current.type === 'catOrder') renderCatOrder(card);
   else if(current.type === 'catSelect') renderCatSelect(card);
   else if(current.type === 'author') renderAuthor(card);
-  else renderHistory(card);
+  //else renderHistory(card);
 }
 function addLabel(card, text){
   const label = document.createElement('div');
