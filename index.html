@@ -1235,7 +1235,16 @@ function renderGap(card){
       registerResult(FAMILIES[current.blankFams[0]].ids,isRight);
       row.innerHTML=''; row.appendChild(buildNextButton());
     };
-    card.appendChild(input); card.appendChild(row);
+    // Auf dem iPad löst Enter bei einem normalen <input> sonst keinen Klick
+    // auf den Prüf-Button aus. Deshalb Enter ausdrücklich als Prüfen behandeln.
+    input.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter' || e.keyCode === 13){
+        e.preventDefault();
+        check.click();
+      }
+    });
+    card.appendChild(input);
+    card.appendChild(row);
     input.focus();
     return;
   }
@@ -1336,7 +1345,16 @@ function checkOrder(fb){
   const slots = document.querySelectorAll('.slot');
   current.placed.forEach((fam,i)=>{ slots[i].classList.add(fam === sortedCorrect[i] ? 'correct' : 'wrong'); });
   fb.className = 'feedback ' + (isRight ? 'good' : 'bad');
-  fb.textContent = isRight ? 'Richtig sortiert!' : 'Richtige Reihenfolge: ' + sortedCorrect.map(f=>FAMILIES[f].label).join(' — ');
+  if(isRight){
+    fb.textContent = 'Richtig sortiert!';
+  }else{
+    const path = [];
+    sortedCorrect.forEach((fam, i) => {
+      if(i > 0 && fam - sortedCorrect[i-1] > 1) path.push('…');
+      path.push(FAMILIES[fam].label);
+    });
+    fb.textContent = 'Richtige Reihenfolge: ' + path.join(' → ');
+  }
   const allIds = [];
   current.fams.forEach(f => allIds.push(...FAMILIES[f].ids));
   registerResult(allIds, isRight);
