@@ -43,7 +43,13 @@
   }
 
   .shelfGroup{margin-bottom:10px;}
-  .shelfLabel{
+  .masteryLine{font-family:var(--serif);font-size:14px;color:var(--ink);text-align:center;margin:0 0 8px;}
+.recentGreen{font-size:11px;color:var(--ink-soft);text-align:center;margin:-2px 0 12px;min-height:15px;}
+.shelf .spine.catStart{margin-left:5px;}
+.historyMode{font-size:11.5px;color:var(--gold);margin:-8px 0 12px;}
+.chapterInput{font-family:var(--sans);font-size:16px;padding:12px;text-align:center;border:1px solid var(--rule);border-radius:5px;background:var(--paper);color:var(--ink);width:100%;}
+.chapterHint{font-size:12px;color:var(--ink-soft);text-align:center;margin:0 0 10px;}
+.shelfLabel{
     font-size:10px;
     color:var(--ink-soft);
     letter-spacing:0.3px;
@@ -282,6 +288,9 @@
     <div class="title">Die Reihenfolge der biblischen Bücher</div>
   </header>
 
+  <div class="masteryLine" id="masteryLine">Sicher beherrscht: 0 / 66 Bücher</div>
+  <div class="recentGreen" id="recentGreen"></div>
+
   <div class="shelfGroup">
     <div class="shelfLabel">Altes Testament</div>
     <div class="shelf" id="shelfAT"></div>
@@ -370,7 +379,7 @@ const TYPE_LABELS = {
   pair:'Reihenfolge', gap:'Lückentext', order:'Sortieren',
   catBool:'Kategorie (Ja/Nein)', catCount:'Kategorie · Anzahl',
   catOrder:'Kategorie · Reihenfolge', catSelect:'Kategorie · Auswahl',
-  author:'Autor', history:'Biblische Geschichte'
+  author:'Autor', history:'Biblische Geschichte', distance:'Abstand'
 };
 const TYPE_DESCRIPTIONS = {
   pair:'Zwei Bücher — welches kommt zuerst?',
@@ -381,11 +390,12 @@ const TYPE_DESCRIPTIONS = {
   catOrder:'Welche Kategorie kommt in der Bibel zuerst?',
   catSelect:'Aus 5 Büchern die auswählen, die zur genannten Kategorie gehören.',
   author:'Wem wird ein Buch (traditionell) als Autor zugeschrieben?',
-  history:'Ein Ereignis wird beschrieben — in welchem Buch steht es?'
+  history:'Ein Ereignis wird beschrieben — in welchem Buch steht es?',
+  distance:'Wie viele Büchergruppen liegen zwischen zwei Büchern?'
 };
-const TYPE_WEIGHTS = { pair:2, gap:3, order:3, catBool:2, catCount:1, catOrder:1, catSelect:1, author:1, history:1 };
+const TYPE_WEIGHTS = { pair:2, gap:3, order:3, catBool:2, catCount:1, catOrder:1, catSelect:1, author:1, history:1, distance:1 };
 const TYPE_KEYS = Object.keys(TYPE_LABELS);
-let enabledTypes = { pair:true, gap:true, order:true, catBool:false, catCount:false, catOrder:false, catSelect:false, author:false, history:false };
+let enabledTypes = { pair:true, gap:true, order:true, catBool:false, catCount:false, catOrder:false, catSelect:false, author:false, history:false, distance:false };
 
 function loadTypeSettings(){
   try{
@@ -442,7 +452,7 @@ function buildBag(){
 }
 
 let weights = new Array(N).fill(6);
-let stats = {totalAnswered:0, totalCorrect:0, currentStreak:0, bestStreak:0};
+let stats = {totalAnswered:0, totalCorrect:0, currentStreak:0, bestStreak:0, recentGreen:[]};
 let current = null;
 let answered = false;
 let testMode = false, testIndex = 0, testScore = 0;
@@ -450,6 +460,11 @@ const TEST_LENGTH = 10;
 
 const STORAGE_KEY_WEIGHTS = 'bibleQuizWeights';
 const STORAGE_KEY_STATS = 'bibleQuizStats';
+const STORAGE_KEY_HISTORY = 'bibleQuizHistory';
+let historyProgress = {};
+
+// Ab wann eine einzelne Geschichte in den schweren Modus wechselt.
+const HISTORY_UNLOCK_CORRECT = 3;
 
 function setStorageStatus(text){
   const el = document.getElementById('storageStatus');
@@ -462,6 +477,9 @@ function loadProgress(){
     const s = localStorage.getItem(STORAGE_KEY_STATS);
     if(w) weights = JSON.parse(w);
     if(s) stats = JSON.parse(s);
+    if(!Array.isArray(stats.recentGreen)) stats.recentGreen = [];
+    const h = localStorage.getItem(STORAGE_KEY_HISTORY);
+    if(h) historyProgress = JSON.parse(h);
     setStorageStatus((w || s) ? 'Vorheriger Fortschritt geladen ✓' : 'Kein gespeicherter Fortschritt gefunden (erster Start auf diesem Gerät/Browser).');
   }catch(e){
     setStorageStatus('⚠️ Laden fehlgeschlagen: ' + (e && e.message ? e.message : String(e)));
@@ -472,6 +490,7 @@ function saveProgress(){
   try{
     localStorage.setItem(STORAGE_KEY_WEIGHTS, JSON.stringify(weights));
     localStorage.setItem(STORAGE_KEY_STATS, JSON.stringify(stats));
+    localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(historyProgress));
     setStorageStatus('Gespeichert ✓ · ' + new Date().toLocaleTimeString());
   }catch(e){
     setStorageStatus('⚠️ Speichern fehlgeschlagen: ' + (e && e.message ? e.message : String(e)) + ' — bitte "Fortschritt exportieren" als Sicherung nutzen.');
@@ -483,16 +502,14 @@ function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
 function weightedIndex(weightArr, exclude){
   exclude = exclude || [];
   let total = 0;
-  for(let i=0;i<weightArr.length;i++)
-    if(!exclude.includes(i)) total += weightArr[i];
+  for(let i=0;i<weightArr.length;i++) if(!exclude.includes(i)) total += weightArr[i];
   let r = Math.random()*total;
   for(let i=0;i<weightArr.length;i++){
     if(exclude.includes(i)) continue;
     r -= weightArr[i];
     if(r < 0) return i;
   }
-  for(let i=0;i<weightArr.length;i++)
-    if(!exclude.includes(i)) return i;
+  for(let i = 0; i < weightArr.length; i++) if(!exclude.includes(i)) return i;
   return 0;
 }
 function familyWeight(f){ return f.ids.reduce((s,i)=>s+weights[i],0)/f.ids.length; }
@@ -501,10 +518,13 @@ function categoryWeight(c){ let s=0,n=0; for(let i=c.start;i<=c.end;i++){s+=weig
 function weightedCategoryIndex(){ return weightedIndex(CATEGORIES.map(categoryWeight)); }
 
 function updateWeight(idx, correct){
+  const before = weights[idx];
   weights[idx] = correct ? clamp(weights[idx]-2,1,20) : clamp(weights[idx]+5,1,20);
+  return before > 2 && weights[idx] <= 2;
 }
 function _finishQuestion(overallCorrect, weightUpdates){
-  weightUpdates.forEach(w => updateWeight(w.idx, w.correct));
+  const greenNow = [];
+  weightUpdates.forEach(w => { if(updateWeight(w.idx, w.correct)) greenNow.push(w.idx); });
   stats.totalAnswered++;
   if(overallCorrect){
     stats.totalCorrect++;
@@ -512,6 +532,12 @@ function _finishQuestion(overallCorrect, weightUpdates){
     stats.bestStreak = Math.max(stats.bestStreak, stats.currentStreak);
   } else {
     stats.currentStreak = 0;
+  }
+  if(greenNow.length){
+    stats.recentGreen = stats.recentGreen || [];
+    greenNow.forEach(idx => {
+      stats.recentGreen = [idx, ...stats.recentGreen.filter(i => i !== idx)].slice(0,3);
+    });
   }
   if(testMode && overallCorrect) testScore++;
   saveProgress();
@@ -527,20 +553,26 @@ function renderShelf(pulseIndices){
   const shelfNT = document.getElementById('shelfNT');
   shelfAT.innerHTML = '';
   shelfNT.innerHTML = '';
+  const categoryStarts = new Set([5,17,22,27,39,43,44,57,65]);
   for(let i=0;i<N;i++){
     const d = document.createElement('div');
     let cls = 'spine mid';
     if(weights[i] <= 2) cls = 'spine green';
     else if(weights[i] > 9) cls = 'spine red';
+    if(categoryStarts.has(i)) cls += ' catStart';
     if(pulseIndices && pulseIndices.includes(i)) cls += ' pulse';
     d.className = cls;
     d.title = BOOKS[i];
     (i < 39 ? shelfAT : shelfNT).appendChild(d);
   }
+  const mastered = weights.filter(w => w <= 2).length;
+  document.getElementById('masteryLine').textContent = 'Sicher beherrscht: ' + mastered + ' / ' + N + ' Bücher';
+  const recent = (stats.recentGreen || []).map(i => BOOKS[i]);
+  document.getElementById('recentGreen').textContent = recent.length ? 'Zuletzt sicher: ' + recent.join(' · ') : '';
 }
 function renderStats(){
   document.getElementById('statLine').textContent =
-    'Serie: ' + stats.currentStreak + ' · Richtig: ' + stats.totalCorrect + '/' + stats.totalAnswered;
+    'Serie: ' + stats.currentStreak + ' · Rekord: ' + stats.bestStreak + ' · Richtig: ' + stats.totalCorrect + '/' + stats.totalAnswered;
 }
 
 // ---------- Fragen-Generatoren ----------
@@ -568,23 +600,23 @@ function genGap(){
   const windowIdx = [start, start+1, start+2];
   const blankPos = windowIdx.includes(center) ? windowIdx.indexOf(center) : desiredPos;
   const blankFam = windowIdx[blankPos];
+  const twoBlanks = Math.random() < 0.35;
+  let blankPositions = twoBlanks
+    ? [blankPos, [0,1,2].filter(p => p !== blankPos)[Math.floor(Math.random()*2)]]
+    : [blankPos];
+  blankPositions = [...new Set(blankPositions)].sort((a,b)=>a-b);
+  const blankFams = blankPositions.map(p => windowIdx[p]);
   let pool = [];
   for(let i=0;i<len;i++){
     if(windowIdx.includes(i)) continue;
-    if(Math.abs(i-blankFam) <= 8) pool.push(i);
+    if(blankFams.some(f => Math.abs(i-f) <= 8)) pool.push(i);
   }
-  if(pool.length < 3) for(let i=0;i<len;i++) if(!windowIdx.includes(i)) pool.push(i);
+  if(pool.length < (twoBlanks ? 4 : 3)) for(let i=0;i<len;i++) if(!windowIdx.includes(i)) pool.push(i);
   pool = [...new Set(pool)];
-  const distractors = [];
-  while(distractors.length < 3 && pool.length){
-    distractors.push(pool.splice(Math.floor(Math.random()*pool.length),1)[0]);
-  }
-  const optionFams = [blankFam, ...distractors];
-  for(let i=optionFams.length-1;i>0;i--){
-    const j = Math.floor(Math.random()*(i+1));
-    [optionFams[i],optionFams[j]] = [optionFams[j],optionFams[i]];
-  }
-  return { type:'gap', windowIdx, blankPos, blankFam, options: optionFams };
+  shuffleArr(pool);
+  const distractors = pool.slice(0, twoBlanks ? 4 : 3);
+  const options = shuffleArr([...blankFams, ...distractors]);
+  return { type:'gap', windowIdx, blankPositions, blankFams, options, twoBlanks, inputMode: Math.random() < 0.30 };
 }
 
 function genOrder(){
@@ -823,6 +855,16 @@ const EVENTS = [
   {text: "Der Apostel Johannes empfängt auf der Insel Patmos visionäre Offenbarungen über das Ende der Welt.", book: 65},
   {text: "Johannes sieht das Neue Jerusalem wie eine geschmückte Braut aus dem Himmel herabsteigen.", book: 65}
 ];
+// Kapitelangaben für den Hardmode. Bei Ereignissen, die in mehreren
+// Evangelien vorkommen, werden die jeweiligen Kapitel je Buch hinterlegt.
+const HISTORY_CHAPTERS = {0: [1], 1: [3], 2: [4], 3: [7], 4: [11], 5: [12], 6: [19], 7: [22], 8: [27], 9: [32], 10: [37], 11: [41], 12: [3], 13: [12], 14: [14], 15: [20], 16: [32], 17: [13], 18: [20], 19: [21], 20: [34], 21: [3], 22: [6], 23: [10], 24: [4], 25: [6], 26: [16], 27: [16], 28: [1], 29: [4], 30: [3], 31: [17], 32: [28], 33: [5], 34: [11], 35: [12], 36: [3], 37: [8], 38: [10], 39: [12], 40: [18], 41: [2], 42: [5], 43: [17], 44: [19], 45: [25], 46: [22], 47: [1], 48: [36], 49: [1], 50: [7], 51: [2], 52: [4], 53: [1], 54: [38], 55: [23], 56: [150], 57: [1], 58: [1], 59: [8], 60: [6], 61: [7], 62: [38], 63: [32], 64: [1], 65: [37], 66: [47], 67: [3], 68: [5], 69: [6], 70: [1], 71: [2], 72: [2], 73: [1], 74: [2], 75: [3], 76: [5], 77: [2], 78: [2], 79: [1], 80: [1], 81: [9], 82: [3], 83: [2], 84: [5], 85: [3, 1, 3], 86: [4, 1, 5], 87: [14, 6, 6], 88: [21, 11, 19, 12], 89: [26, 14, 22], 90: [8, 5, 8], 91: [17, 9, 9], 92: [26, 14, 22, 18], 93: [4, 1, 4], 94: [14, 6, 9, 6], 95: [26, 14, 22], 96: [27, 15, 23, 19], 97: [21, 11, 19], 98: [2], 99: [16, 24], 100: [1], 101: [2], 102: [2], 103: [11], 104: [13], 105: [20], 106: [20], 107: [2], 108: [7], 109: [9], 110: [16], 111: [17], 112: [28], 113: [3], 114: [13], 115: [15], 116: [12], 117: [3], 118: [6], 119: [4], 120: [1], 121: [4], 122: [2], 123: [3], 124: [4], 125: [1], 126: [1], 127: [7], 128: [11], 129: [2], 130: [2], 131: [3], 132: [1], 133: [1], 134: [1], 135: [1], 136: [1], 137: [21]};
+const HISTORY_MULTI_CHAPTERS = {85: {39: 3, 40: 1, 41: 3}, 86: {39: 4, 40: 1, 41: 5}, 87: {39: 14, 40: 6, 42: 6}, 88: {39: 21, 40: 11, 41: 19, 42: 12}, 89: {39: 26, 40: 14, 41: 22}, 90: {39: 8, 40: 5, 41: 8}, 91: {39: 17, 40: 9, 41: 9}, 92: {39: 26, 40: 14, 41: 22, 42: 18}, 93: {39: 4, 40: 1, 41: 4}, 94: {39: 14, 40: 6, 41: 9, 42: 6}, 95: {39: 26, 40: 14, 41: 22}, 96: {39: 27, 40: 15, 41: 23, 42: 19}, 97: {39: 21, 40: 11, 41: 19}, 98: {42: 2}, 99: {40: 16, 41: 24}, 100: {41: 1}, 101: {41: 2}, 102: {42: 2}, 103: {42: 11}, 104: {42: 13}, 105: {42: 20}, 106: {42: 20}};
+EVENTS.forEach((e,i)=>{
+  if(HISTORY_MULTI_CHAPTERS[i]) e.chapters = HISTORY_MULTI_CHAPTERS[i];
+  else if(HISTORY_CHAPTERS[i]) e.chapter = HISTORY_CHAPTERS[i][0];
+});
+
+
 
 function shuffleArr(arr){
   for(let i=arr.length-1;i>0;i--){
@@ -849,22 +891,21 @@ function genHistory(){
   const w = EVENTS.map(weightForEvent);
   const evIdx = weightedIndex(w);
   const ev = EVENTS[evIdx];
-  if(ev.books){
-    return { type:'history', ev, selected: new Set() };
-  }
-  const testament = ev.book < 39 ? 'AT' : 'NT';
+  const multiBook = Array.isArray(ev.books) && ev.books.length > 1;
+  const targetBook = multiBook ? null : (ev.book !== undefined ? ev.book : ev.books[0]);
+  const progress = historyProgress[evIdx] || {bookCorrect:0,chapterCorrect:0,inputUnlocked:false};
+  // Mehrfach-Evangelien bleiben bei der Mehrfachauswahl. Ereignisse mit genau
+  // einem Buch können dagegen nach drei richtigen Zuordnungen schwer werden.
+  if(multiBook){ return { type:'history', ev, selected:new Set(), evIdx, hard:false, multiBook:true }; }
+  const hard = progress.bookCorrect >= HISTORY_UNLOCK_CORRECT;
+  const testament = targetBook < 39 ? 'AT' : 'NT';
   const pool = [];
-  for(let i=0;i<N;i++){
-    if(i === ev.book) continue;
-    if((i < 39 ? 'AT' : 'NT') !== testament) continue;
-    pool.push(i);
-  }
-  const nearPool = pool.filter(i => Math.abs(i-ev.book) <= 6);
-  const usePool = nearPool.length >= 3 ? nearPool : pool;
+  for(let i=0;i<N;i++){ if(i===targetBook) continue; if((i<39?'AT':'NT')!==testament) continue; pool.push(i); }
+  const nearPool = pool.filter(i=>Math.abs(i-targetBook)<=6);
+  const usePool = nearPool.length>=3 ? nearPool : pool;
   shuffleArr(usePool);
-  const distractors = usePool.slice(0,3);
-  const options = shuffleArr([ev.book, ...distractors]);
-  return { type:'history', ev, options };
+  const options = shuffleArr([targetBook,...usePool.slice(0,3)]);
+  return { type:'history', ev, options, evIdx, hard, chapterInput: progress.inputUnlocked || false, targetBook, multiBook:false };
 }
 
 function genCatSelect(){
@@ -907,6 +948,7 @@ function nextQuestion(){
   else if(t === 'catOrder') current = genCatOrder();
   else if(t === 'catSelect') current = genCatSelect();
   else if(t === 'author') current = genAuthor();
+  else if(t === 'distance') current = genDistance();
   else current = genHistory();
   render();
 }
@@ -935,6 +977,7 @@ function render(){
   else if(current.type === 'catOrder') renderCatOrder(card);
   else if(current.type === 'catSelect') renderCatSelect(card);
   else if(current.type === 'author') renderAuthor(card);
+  else if(current.type === 'distance') renderDistance(card);
   else renderHistory(card);
 }
 function addLabel(card, text){
@@ -999,39 +1042,86 @@ function renderPair(card){
 }
 
 function renderGap(card){
-  addLabel(card, 'Lückentext');
-  addQ(card, 'Was fehlt in der Reihe?');
+  addLabel(card, current.inputMode ? 'Lückentext · Schwer' : 'Lückentext');
+  addQ(card, current.twoBlanks ? 'Welche zwei Bücher fehlen in der Reihe?' : 'Was fehlt in der Reihe?');
   const fb = addFb(card);
   const seq = document.createElement('div');
   seq.className = 'seqLine';
+  const blankSet = new Set(current.blankPositions);
   const parts = current.windowIdx.map((fam,pos)=>{
-    if(pos === current.blankPos) return '<span class="blank" id="blankSpan">?</span>';
+    if(blankSet.has(pos)) return '<span class="blank">?</span>';
     return '<span class="known">' + FAMILIES[fam].label + '</span>';
   });
   seq.innerHTML = parts.join(' — ');
   card.appendChild(seq);
-  const opts = document.createElement('div');
-  opts.className = 'options';
-  current.options.forEach(fam=>{
-    const el = document.createElement('div');
-    el.className = 'opt';
-    el.textContent = FAMILIES[fam].label;
-    el.onclick = () => {
+
+  if(current.inputMode && !current.twoBlanks){
+    const input = document.createElement('input');
+    input.className = 'chapterInput';
+    input.type = 'text';
+    input.autocomplete = 'off';
+    input.placeholder = 'Buch eingeben';
+    const row = document.createElement('div'); row.className='actionRow';
+    const check = document.createElement('button'); check.className='primary'; check.textContent='Prüfen';
+    check.onclick = () => {
       if(answered) return;
-      answered = true;
-      const isRight = fam === current.blankFam;
-      el.classList.add(isRight ? 'correct' : 'wrong');
-      opts.querySelectorAll('.opt').forEach(o=>o.classList.add('disabled'));
-      if(!isRight){ [...opts.children].forEach(o=>{ if(o.textContent === FAMILIES[current.blankFam].label) o.classList.add('correct'); }); }
-      document.getElementById('blankSpan').textContent = FAMILIES[current.blankFam].label;
-      fb.className = 'feedback ' + (isRight ? 'good' : 'bad');
-      fb.textContent = isRight ? 'Richtig!' : 'Es ist ' + FAMILIES[current.blankFam].label + '.';
-      registerResult(FAMILIES[current.blankFam].ids, isRight);
+      const answer = input.value.trim().toLowerCase();
+      const correctLabel = FAMILIES[current.blankFams[0]].label.toLowerCase();
+      const aliases = FAMILIES[current.blankFams[0]].ids.map(i=>BOOKS[i].toLowerCase());
+      const isRight = answer === correctLabel || aliases.includes(answer);
+      answered = true; input.disabled=true; check.disabled=true;
+      seq.innerHTML = current.windowIdx.map((fam,pos)=> blankSet.has(pos) ? '<span class="known">'+FAMILIES[fam].label+'</span>' : '<span class="known">'+FAMILIES[fam].label+'</span>').join(' — ');
+      fb.className='feedback '+(isRight?'good':'bad');
+      fb.textContent=isRight?'Richtig!':'Es ist '+FAMILIES[current.blankFams[0]].label+'.';
+      registerResult(FAMILIES[current.blankFams[0]].ids,isRight);
+      row.innerHTML=''; row.appendChild(buildNextButton());
     };
-    opts.appendChild(el);
-  });
-  card.appendChild(opts);
-  card.appendChild(buildActionRow());
+    card.appendChild(input); card.appendChild(row);
+    input.focus();
+    return;
+  }
+
+  const opts = document.createElement('div'); opts.className='options';
+  if(current.twoBlanks){
+    const selected = new Set();
+    current.options.forEach(fam=>{
+      const el=document.createElement('div'); el.className='opt'; el.textContent=FAMILIES[fam].label;
+      el.onclick=()=>{
+        if(answered) return;
+        if(selected.has(fam)){ selected.delete(fam); el.classList.remove('correct'); }
+        else { selected.add(fam); el.classList.add('correct'); }
+      };
+      opts.appendChild(el);
+    });
+    card.appendChild(opts);
+    const row=document.createElement('div'); row.className='actionRow';
+    const check=document.createElement('button'); check.className='primary'; check.textContent='Prüfen';
+    check.onclick=()=>{
+      if(answered) return; answered=true;
+      const truth=new Set(current.blankFams);
+      const isRight=selected.size===truth.size && [...truth].every(f=>selected.has(f));
+      [...opts.children].forEach((el,i)=>{ const fam=current.options[i]; el.classList.remove('correct'); if(truth.has(fam)) el.classList.add('correct'); if(!truth.has(fam)&&selected.has(fam)) el.classList.add('wrong'); el.classList.add('disabled'); });
+      fb.className='feedback '+(isRight?'good':'bad');
+      fb.textContent=isRight?'Richtig!':'Es fehlen: '+current.blankFams.map(f=>FAMILIES[f].label).join(' und ')+'.';
+      _finishQuestion(isRight,current.options.map(f=>({idx:f,correct:selected.has(f)===truth.has(f)})));
+      row.innerHTML=''; row.appendChild(buildNextButton());
+    };
+    row.appendChild(check); card.appendChild(row);
+  } else {
+    current.options.forEach(fam=>{
+      const el=document.createElement('div'); el.className='opt'; el.textContent=FAMILIES[fam].label;
+      el.onclick=()=>{
+        if(answered) return; answered=true;
+        const isRight=fam===current.blankFams[0];
+        el.classList.add(isRight?'correct':'wrong'); opts.querySelectorAll('.opt').forEach(o=>o.classList.add('disabled'));
+        if(!isRight) [...opts.children].forEach(o=>{if(o.textContent===FAMILIES[current.blankFams[0]].label)o.classList.add('correct');});
+        seq.innerHTML=current.windowIdx.map((f,pos)=>blankSet.has(pos)?'<span class="known">'+FAMILIES[f].label+'</span>':'<span class="known">'+FAMILIES[f].label+'</span>').join(' — ');
+        fb.className='feedback '+(isRight?'good':'bad'); fb.textContent=isRight?'Richtig!':'Es ist '+FAMILIES[current.blankFams[0]].label+'.';
+        registerResult(FAMILIES[current.blankFams[0]].ids,isRight);
+      }; opts.appendChild(el);
+    });
+    card.appendChild(opts); card.appendChild(buildActionRow());
+  }
 }
 
 function renderOrder(card){
@@ -1260,45 +1350,96 @@ function renderAuthor(card){
   card.appendChild(buildActionRow());
 }
 
+function renderDistance(card){
+  addLabel(card,'Abstand');
+  addQ(card,'Wie viele Büchergruppen liegen zwischen ' + FAMILIES[current.a].label + ' und ' + FAMILIES[current.b].label + '?');
+  const fb=addFb(card); const opts=document.createElement('div'); opts.className='options';
+  current.options.forEach(v=>{
+    const el=document.createElement('div'); el.className='opt'; el.textContent=String(v);
+    el.onclick=()=>{ if(answered)return; answered=true; const isRight=v===current.correct; el.classList.add(isRight?'correct':'wrong'); opts.querySelectorAll('.opt').forEach(o=>o.classList.add('disabled')); if(!isRight)[...opts.children].forEach(o=>{if(Number(o.textContent)===current.correct)o.classList.add('correct');}); fb.className='feedback '+(isRight?'good':'bad'); fb.textContent=isRight?'Richtig!':'Es liegen '+current.correct+' Büchergruppen dazwischen.'; registerResult(FAMILIES[current.a].ids.concat(FAMILIES[current.b].ids),isRight); };
+    opts.appendChild(el);
+  });
+  card.appendChild(opts); card.appendChild(buildActionRow());
+}
+
 function renderHistory(card){
-  addLabel(card, 'Biblische Geschichte');
+  addLabel(card, current.hard ? 'Biblische Geschichte · Schwer' : 'Biblische Geschichte');
   addQ(card, current.ev.text);
   const instr = document.createElement('div');
-  instr.style.fontSize = '13px';
-  instr.style.color = 'var(--ink-soft)';
-  instr.style.marginBottom = '14px';
-  instr.style.marginTop = '-10px';
+  instr.style.fontSize='13px'; instr.style.color='var(--ink-soft)'; instr.style.marginBottom='14px'; instr.style.marginTop='-10px';
   card.appendChild(instr);
 
-  if(current.ev.books){
-    instr.textContent = 'In welchen Evangelien wird dies beschrieben?';
-    renderHistoryMulti(card);
+  if(current.multiBook){
+    instr.textContent='In welchen Evangelien wird dies beschrieben?';
+    renderHistoryMulti(card); return;
+  }
+
+  if(!current.hard){
+    instr.textContent='In welchem Buch geschieht das?';
+    renderHistoryBookChoice(card);
     return;
   }
 
-  instr.textContent = 'In welchem Buch geschieht das?';
-  const fb = addFb(card);
-  const opts = document.createElement('div');
-  opts.className = 'options';
+  instr.textContent='In welchem Buch und in welchem Kapitel geschieht das?';
+  renderHistoryHard(card);
+}
+
+function recordHistoryBookResult(evIdx, correct){
+  const p=historyProgress[evIdx] || {bookCorrect:0,chapterCorrect:0,inputUnlocked:false};
+  if(correct) p.bookCorrect++;
+  historyProgress[evIdx]=p;
+}
+function renderHistoryBookChoice(card){
+  const fb=addFb(card); const opts=document.createElement('div'); opts.className='options';
   current.options.forEach(bookIdx=>{
-    const el = document.createElement('div');
-    el.className = 'opt';
-    el.textContent = BOOKS[bookIdx];
-    el.onclick = () => {
-      if(answered) return;
-      answered = true;
-      const isRight = bookIdx === current.ev.book;
-      el.classList.add(isRight ? 'correct' : 'wrong');
-      opts.querySelectorAll('.opt').forEach(o=>o.classList.add('disabled'));
-      if(!isRight){ [...opts.children].forEach(o=>{ if(o.textContent === BOOKS[current.ev.book]) o.classList.add('correct'); }); }
-      fb.className = 'feedback ' + (isRight ? 'good' : 'bad');
-      fb.textContent = isRight ? 'Richtig!' : ('Das steht in ' + BOOKS[current.ev.book] + '.');
-      registerResult([current.ev.book], isRight);
-    };
+    const el=document.createElement('div'); el.className='opt'; el.textContent=BOOKS[bookIdx];
+    el.onclick=()=>{ if(answered)return; answered=true; const isRight=bookIdx===current.targetBook; el.classList.add(isRight?'correct':'wrong'); opts.querySelectorAll('.opt').forEach(o=>o.classList.add('disabled')); if(!isRight)[...opts.children].forEach(o=>{if(o.textContent===BOOKS[current.targetBook])o.classList.add('correct');}); fb.className='feedback '+(isRight?'good':'bad'); fb.textContent=isRight?'Richtig!':'Das steht in '+BOOKS[current.targetBook]+'.'; recordHistoryBookResult(current.evIdx,isRight); registerResult([current.targetBook],isRight); saveProgress(); };
     opts.appendChild(el);
   });
-  card.appendChild(opts);
-  card.appendChild(buildActionRow());
+  card.appendChild(opts); card.appendChild(buildActionRow());
+}
+function chapterOptions(correct){
+  const vals=new Set([correct]);
+  while(vals.size<4){ const delta=Math.floor(Math.random()*7)-3; const v=Math.max(1,correct+delta); vals.add(v); }
+  return shuffleArr([...vals]);
+}
+function finishHistoryHard(isRight, fb, extraFinish){
+  const p=historyProgress[current.evIdx] || {bookCorrect:3,chapterCorrect:0,inputUnlocked:false};
+  if(isRight) p.chapterCorrect++; else p.chapterCorrect=0;
+  if(p.chapterCorrect>=2) p.inputUnlocked=true;
+  historyProgress[current.evIdx]=p;
+  extraFinish();
+  saveProgress();
+}
+function renderHistoryHard(card){
+  const fb=addFb(card);
+  const bookBox=document.createElement('div'); bookBox.className='options';
+  current.options.forEach(bookIdx=>{
+    const el=document.createElement('div'); el.className='opt'; el.textContent=BOOKS[bookIdx];
+    el.onclick=()=>{
+      if(answered)return;
+      const isBookRight=bookIdx===current.targetBook;
+      if(!isBookRight){ answered=true; el.classList.add('wrong'); bookBox.querySelectorAll('.opt').forEach(o=>o.classList.add('disabled')); [...bookBox.children].forEach(o=>{if(o.textContent===BOOKS[current.targetBook])o.classList.add('correct');}); fb.className='feedback bad'; fb.textContent='Das steht in '+BOOKS[current.targetBook]+'.'; finishHistoryHard(false,fb,()=>registerResult([current.targetBook],false)); return; }
+      bookBox.querySelectorAll('.opt').forEach(o=>o.classList.add('disabled')); el.classList.add('correct');
+      renderHistoryChapter(card, fb);
+    };
+    bookBox.appendChild(el);
+  });
+  card.appendChild(bookBox);
+}
+function renderHistoryChapter(card, fb){
+  const chapter = current.ev.chapter;
+  const label=document.createElement('div'); label.className='chapterHint'; label.textContent='Kapitel wählen'; card.appendChild(label);
+  const useInput=current.chapterInput;
+  if(useInput){
+    const input=document.createElement('input'); input.className='chapterInput'; input.type='number'; input.min='1'; input.max='200'; input.placeholder='Kapitel';
+    const row=document.createElement('div'); row.className='actionRow'; const check=document.createElement('button'); check.className='primary'; check.textContent='Prüfen';
+    check.onclick=()=>{ if(answered)return; answered=true; const isRight=Number(input.value)===chapter; input.disabled=true; check.disabled=true; fb.className='feedback '+(isRight?'good':'bad'); fb.textContent=isRight?'Richtig!':'Es ist Kapitel '+chapter+'.'; finishHistoryHard(isRight,fb,()=>registerResult([current.targetBook],isRight)); row.innerHTML=''; row.appendChild(buildNextButton()); };
+    card.appendChild(input); card.appendChild(row); input.focus();
+  } else {
+    const opts=document.createElement('div'); opts.className='options'; chapterOptions(chapter).forEach(v=>{ const el=document.createElement('div'); el.className='opt'; el.textContent='Kapitel '+v; el.onclick=()=>{ if(answered)return; answered=true; const isRight=v===chapter; el.classList.add(isRight?'correct':'wrong'); opts.querySelectorAll('.opt').forEach(o=>o.classList.add('disabled')); if(!isRight)[...opts.children].forEach(o=>{if(o.textContent==='Kapitel '+chapter)o.classList.add('correct');}); fb.className='feedback '+(isRight?'good':'bad'); fb.textContent=isRight?'Richtig!':'Es ist Kapitel '+chapter+'.'; finishHistoryHard(isRight,fb,()=>registerResult([current.targetBook],isRight)); }; opts.appendChild(el); });
+    card.appendChild(opts);
+  }
 }
 
 function renderHistoryMulti(card){
@@ -1390,7 +1531,9 @@ document.getElementById('testBtn').onclick = () => {
 document.getElementById('resetBtn').onclick = async () => {
   if(!confirm('Deinen gesamten Fortschritt wirklich zurücksetzen?')) return;
   weights = new Array(N).fill(6);
-  stats = {totalAnswered:0, totalCorrect:0, currentStreak:0, bestStreak:0};
+  stats = {totalAnswered:0, totalCorrect:0, currentStreak:0, bestStreak:0, recentGreen:[]};
+  historyProgress = {};
+  localStorage.removeItem(STORAGE_KEY_HISTORY);
   testMode = false;
   await saveProgress();
   renderShelf();
