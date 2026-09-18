@@ -487,8 +487,8 @@ function weightedIndex(weightArr, exclude){
   let r = Math.random()*total;
   for(let i=0;i<weightArr.length;i++){
     if(exclude.includes(i)) continue;
-    if(r < weightArr[i]) return i;
     r -= weightArr[i];
+    if(r < weightArr[i]) return i;
   }
   for(let i=weightArr.length-1;i>=0;i--) if(!exclude.includes(i)) return i;
   return 0;
