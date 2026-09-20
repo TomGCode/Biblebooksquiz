@@ -322,7 +322,7 @@
     <button class="resetLink" id="resetBtn">Fortschritt zurücksetzen</button>
   </footer>
   <div id="storageStatus" style="font-size:10.5px;color:var(--ink-soft);text-align:center;margin-top:8px;">Speicherstatus wird geprüft …</div>
-  <div style="font-size:9px;color:var(--ink-soft);text-align:center;margin-top:4px;opacity:.75;">Version 1.3.3</div>
+  <div style="font-size:9px;color:var(--ink-soft);text-align:center;margin-top:4px;opacity:.75;">Version 1.3.5</div>
 </div>
 
 <script>
@@ -383,25 +383,26 @@ function categoryMembers(cat){ const arr=[]; for(let i=cat.start;i<=cat.end;i++)
 
 const TYPE_LABELS = {
   pair:'Reihenfolge', gap:'Lückentext', order:'Sortieren',
+  author:'Autor', history:'Biblische Geschichte', distance:'Abstand',
   catBool:'Kategorie (Ja/Nein)', catCount:'Kategorie · Anzahl',
-  catOrder:'Kategorie · Reihenfolge', catSelect:'Kategorie · Auswahl',
-  author:'Autor', history:'Biblische Geschichte', distance:'Abstand'
+  catOrder:'Kategorie · Reihenfolge', catSelect:'Kategorie · Auswahl'
+  
 };
 const TYPE_DESCRIPTIONS = {
   pair:'Zwei Bücher — welches kommt zuerst?',
   gap:'Fehlendes Buch in einer 3er-Reihe ergänzen.',
   order:'3–6 Bücher in die richtige Reihenfolge bringen.',
+  author:'Wem wird ein Buch (traditionell) als Autor zugeschrieben?',
+  history:'Ein Ereignis wird beschrieben — in welchem Buch steht es?',
+  distance:'Wie viele Büchergruppen liegen zwischen zwei Büchern?',
   catBool:'Ja/Nein: Gehört dieses Buch zu dieser Kategorie?',
   catCount:'Wie viele Bücher gehören zu einer Kategorie?',
   catOrder:'Welche Kategorie kommt in der Bibel zuerst?',
-  catSelect:'Aus 5 Büchern die auswählen, die zur genannten Kategorie gehören.',
-  author:'Wem wird ein Buch (traditionell) als Autor zugeschrieben?',
-  history:'Ein Ereignis wird beschrieben — in welchem Buch steht es?',
-  distance:'Wie viele Büchergruppen liegen zwischen zwei Büchern?'
+  catSelect:'Aus 5 Büchern die auswählen, die zur genannten Kategorie gehören.'
 };
-const TYPE_WEIGHTS = { pair:2, gap:3, order:3, catBool:2, catCount:1, catOrder:1, catSelect:1, author:1, history:1, distance:1 };
+const TYPE_WEIGHTS = { pair:2, gap:3, order:3, author:1, history:1, distance:1, catBool:2, catCount:1, catOrder:1, catSelect:1 };
 const TYPE_KEYS = Object.keys(TYPE_LABELS);
-let enabledTypes = { pair:true, gap:true, order:true, catBool:false, catCount:false, catOrder:false, catSelect:false, author:false, history:false, distance:false };
+let enabledTypes = { pair:true, gap:true, order:true, author:false, history:false, distance:false, catBool:false, catCount:false, catOrder:false, catSelect:false };
 
 function loadTypeSettings(){
   try{
@@ -921,10 +922,10 @@ const EVENTS = [
   {text: "Der Prophet beschreibt Gottes messianischen Frieden, in dem Schwerter zu Pflugscharen umgeschmiedet werden.", book: 32, chapter: 4},
   {text: "Der Prophet schließt sein Buch mit einem triumphierenden Lied des Vertrauens trotz totaler Missernte.", book: 34, chapter: 3},
   {text: "Der Prophet sieht den Hohepriester Josua in schmutzigen Kleidern, die Gott gegen Festkleider austauscht.", book: 37, chapter: 3},
-  {text: "König Herodes lässt aus Angst vor dem neugeborenen König alle Knaben in Bethlehem ermorden.", book: 39, chapter: 2},
-  {text: "Jesus erzählt das Gleichnis vom barmherzigen Samariter, der einem Ausgeraubten hilft.", book: 41, chapter: 10},
-  {text: "Jesus speist mit dem Zöllner Zachäus in dessen Haus, woraufhin dieser sein Leben ändert.", book: 41, chapter: 19},
-  {text: "Jesus heilt am Sabbat einen blindgeborenen Mann, indem er ihm Brei aus Speichel und Erde auf die Augen streicht.", book: 42, chapter: 9},
+  {text: "König Herodes lässt aus Angst vor dem neugeborenen König alle Knaben in Bethlehem ermorden.", books: [39], chapter: 2},
+  {text: "Jesus erzählt das Gleichnis vom barmherzigen Samariter, der einem Ausgeraubten hilft.", books: [41], chapter: 10},
+  {text: "Jesus speist mit dem Zöllner Zachäus in dessen Haus, woraufhin dieser sein Leben ändert.", books: [41], chapter: 19},
+  {text: "Jesus heilt am Sabbat einen blindgeborenen Mann, indem er ihm Brei aus Speichel und Erde auf die Augen streicht.", books: [42], chapter: 9},
   {text: "Ananias und Saphira fallen nach einer Lüge über ihren Landverkauf vor den Aposteln tot um.", book: 43, chapter: 5},
   {text: "Der Zauberer Simon versucht, den Aposteln die Gabe des Heiligen Geistes mit Geld abzukaufen.", book: 43, chapter: 8},
   {text: "Philippus bekehrt den äthiopischen Kämmerer auf der Wüstenstraße nach Gaza.", book: 43, chapter: 8},
@@ -988,18 +989,18 @@ const EVENTS = [
   {text: "Der Prophet verkündet, dass die Herrlichkeit des zukünftigen, zweiten Tempels größer sein wird als die des ersten.", book: 36, chapter: 2},
   {text: "Der Prophet sieht einen Engel mit einer Messschnur, der die zukünftigen Maße Jerusalems bestimmen will.", book: 37, chapter: 2},
   {text: "Der Prophet warnt die Männer davor, die Frau ihrer Jugend treulos zu verlassen, weil Gott Ehescheidung hasst.", book: 38, chapter: 2},
-  {text: "Jesus wird vom Teufel auf die Zinne des Tempels gestellt und aufgefordert, sich hinabzustürzen.", book: 39, chapter: 4},
-  {text: "Petrus versucht, auf dem Wasser zu Jesus zu gehen, bekommt es aber mit der Angst zu tun und beginnt zu sinken.", book: 39, chapter: 14},
-  {text: "Judas Iskariot bereut den Verrat, wirft die dreißig Silberlinge in den Tempel und erhängt sich.", book: 39, chapter: 27},
-  {text: "Jesus heilt eine blutflüssige Frau, die im Gedränge heimlich den Saum seines Gewandes berührt.", book: 40, chapter: 5},
-  {text: "Jesus heilt den blinden Bettler Bartimäus am Stadttor von Jericho, nachdem dieser laut nach ihm gerufen hat.", book: 40, chapter: 10},
-  {text: "Der Hohepriester Kajaphas zerreißt sein Gewand und beschuldigt Jesus der Gotteslästerung.", book: 40, chapter: 14},
-  {text: "Die Hirten auf dem Feld hören den Lobgesang der Engel und eilen zur Krippe nach Bethlehem.", book: 41, chapter: 2},
-  {text: "Der zwölfjährige Jesus bleibt unbemerkt in Jerusalem zurück und diskutiert im Tempel mit den Schriftgelehrten.", book: 41, chapter: 2},
-  {text: "Jesus erzählt das Gleichnis vom verlorenen Sohn, der sein Erbe verprasst und reuevoll zum Vater zurückkehrt.", book: 41, chapter: 15},
-  {text: "Jesus begegnet einer samaritischen Frau am Jakobsbrunnen und spricht mit ihr über das lebendige Wasser.", book: 42, chapter: 4},
-  {text: "Jesus bückt sich im Tempel und schreibt mit dem Finger auf die Erde, während die Ankläger eine Ehebrecherin steinigen wollen.", book: 42, chapter: 8},
-  {text: "Maria von Bethanien salbt die Füße Jesu mit kostbarem Nardenöl und trocknet sie mit ihrem Haar.", book: 42, chapter: 12},
+  {text: "Jesus wird vom Teufel auf die Zinne des Tempels gestellt und aufgefordert, sich hinabzustürzen.", books: [39,41], chapters: {39:4, 41:4}},
+  {text: "Petrus versucht, auf dem Wasser zu Jesus zu gehen, bekommt es aber mit der Angst zu tun und beginnt zu sinken.", books: [39], chapter: 14},
+  {text: "Judas Iskariot bereut den Verrat, wirft die dreißig Silberlinge in den Tempel und erhängt sich.", books: [39], chapter: 27},
+  {text: "Jesus heilt eine blutflüssige Frau, die im Gedränge heimlich den Saum seines Gewandes berührt.", books: [39,40,41], chapters: {39:9, 40:5, 41:8}},
+  {text: "Jesus heilt den blinden Bettler Bartimäus am Stadttor von Jericho, nachdem dieser laut nach ihm gerufen hat.", books: [40], chapter: 10},
+  {text: "Der Hohepriester Kajaphas zerreißt sein Gewand und beschuldigt Jesus der Gotteslästerung.", books: [39,40], chapters: {39:26, 40:14}},
+  {text: "Die Hirten auf dem Feld hören den Lobgesang der Engel und eilen zur Krippe nach Bethlehem.", books: [41], chapter: 2},
+  {text: "Der zwölfjährige Jesus bleibt unbemerkt in Jerusalem zurück und diskutiert im Tempel mit den Schriftgelehrten.", books: [41], chapter: 2},
+  {text: "Jesus erzählt das Gleichnis vom verlorenen Sohn, der sein Erbe verprasst und reuevoll zum Vater zurückkehrt.", books: [41], chapter: 15},
+  {text: "Jesus begegnet einer samaritischen Frau am Jakobsbrunnen und spricht mit ihr über das lebendige Wasser.", books: [42], chapter: 4},
+  {text: "Jesus bückt sich im Tempel und schreibt mit dem Finger auf die Erde, während die Ankläger eine Ehebrecherin steinigen wollen.", books: [42], chapter: 8},
+  {text: "Maria von Bethanien salbt die Füße Jesu mit kostbarem Nardenöl und trocknet sie mit ihrem Haar.", books: [42], chapter: 12},
   {text: "Die Jünger wählen per Los Matthias aus, damit er den Platz des verräterischen Judas im Apostelkreis einnimmt.", book: 43, chapter: 1},
   {text: "Petrus heilt im Namen Jesu einen lahmen Bettler an der Schönen Pforte des Tempels.", book: 43, chapter: 3},
   {text: "Petrus sieht im Traum ein großes Leinentuch mit unreinen Tieren und erhält den Auftrag, den Heiden Kornelius zu taufen.", book: 43, chapter: 10},
@@ -1066,13 +1067,18 @@ function genDistance(){
   return { type:'distance', a, b, correct, options };
 }
 
+// AUTHORS[0..52] sind die tatsächlichen (traditionellen) Buchautoren, an FAMILIES ausgerichtet.
+// AUTHORS[53..69] sind zusätzliche, plausibel klingende biblische Namen, die NUR als falsche
+// Auswahloptionen dienen (nie selbst als richtige Antwort) - 53..62 eher AT-nah, 63..69 eher NT-nah.
 function genAuthor(){
   const eligible = FAMILIES.map((f,i)=>i).filter(i => AUTHORS[i] !== null);
   const w = eligible.map(i => familyWeight(FAMILIES[i]));
   const famIdx = eligible[weightedIndex(w)];
   const correctAuthor = AUTHORS[famIdx];
   const testament = FAMILIES[famIdx].testament;
-  const pool = [...new Set(eligible.filter(i => FAMILIES[i].testament === testament && AUTHORS[i] !== correctAuthor).map(i => AUTHORS[i]))];
+  const regularPool = eligible.filter(i => FAMILIES[i].testament === testament && AUTHORS[i] !== correctAuthor).map(i => AUTHORS[i]);
+  const extraPool = (testament === 'AT' ? AUTHORS.slice(53,63) : AUTHORS.slice(63,70)).filter(a => a !== correctAuthor);
+  const pool = [...new Set([...regularPool, ...extraPool])];
   shuffleArr(pool);
   const options = shuffleArr([correctAuthor, ...pool.slice(0,2)]);
   return { type:'author', famIdx, correctAuthor, options };
@@ -1090,13 +1096,22 @@ function genHistory(){
   // einem Buch können dagegen nach drei richtigen Zuordnungen schwer werden.
   if(multiBook){ return { type:'history', ev, selected:new Set(), evIdx, hard:false, multiBook:true }; }
   const hard = progress.bookCorrect >= HISTORY_UNLOCK_CORRECT;
-  const testament = targetBook < 39 ? 'AT' : 'NT';
-  const pool = [];
-  for(let i=0;i<N;i++){ if(i===targetBook) continue; if((i<39?'AT':'NT')!==testament) continue; pool.push(i); }
-  const nearPool = pool.filter(i=>Math.abs(i-targetBook)<=6);
-  const usePool = nearPool.length>=3 ? nearPool : pool;
-  shuffleArr(usePool);
-  const options = shuffleArr([targetBook,...usePool.slice(0,3)]);
+  // Events, die als books:[...] markiert sind (auch mit nur einem Evangelium), sind Evangelien-Vergleichsfragen:
+  // die Antwortoptionen bleiben dann ausschließlich unter den vier Evangelien.
+  const isGospelEvent = Array.isArray(ev.books);
+  let options;
+  if(isGospelEvent){
+    const gospelPool = shuffleArr([39,40,41,42].filter(b => b !== targetBook));
+    options = shuffleArr([targetBook, ...gospelPool.slice(0,3)]);
+  } else {
+    const testament = targetBook < 39 ? 'AT' : 'NT';
+    const pool = [];
+    for(let i=0;i<N;i++){ if(i===targetBook) continue; if((i<39?'AT':'NT')!==testament) continue; pool.push(i); }
+    const nearPool = pool.filter(i=>Math.abs(i-targetBook)<=6);
+    const usePool = nearPool.length>=3 ? nearPool : pool;
+    shuffleArr(usePool);
+    options = shuffleArr([targetBook, ...usePool.slice(0,3)]);
+  }
   return { type:'history', ev, options, evIdx, hard, chapterInput: progress.inputUnlocked || false, targetBook, multiBook:false };
 }
 
@@ -1135,13 +1150,13 @@ function nextQuestion(){
   if(t === 'pair') current = genPair();
   else if(t === 'gap') current = genGap();
   else if(t === 'order') current = Math.random() < 0.5 ? genOrderSeq() : genOrder();
+  else if(t === 'author') current = genAuthor();
+  else if(t === 'distance') current = genDistance();
+  else if(t === 'history') current = genHistory();
   else if(t === 'catBool') current = genCatBool();
   else if(t === 'catCount') current = genCatCount();
   else if(t === 'catOrder') current = genCatOrder();
   else if(t === 'catSelect') current = genCatSelect();
-  else if(t === 'author') current = genAuthor();
-  else if(t === 'distance') current = genDistance();
-  else current = genHistory();
   render();
 }
 function advance(){
@@ -1164,13 +1179,13 @@ function render(){
   if(current.type === 'pair') renderPair(card);
   else if(current.type === 'gap') renderGap(card);
   else if(current.type === 'order') renderOrder(card);
+  else if(current.type === 'author') renderAuthor(card);
+  else if(current.type === 'distance') renderDistance(card);
+  else if(current.type === 'history') renderHistory(card);
   else if(current.type === 'catBool') renderCatBool(card);
   else if(current.type === 'catCount') renderCatCount(card);
   else if(current.type === 'catOrder') renderCatOrder(card);
   else if(current.type === 'catSelect') renderCatSelect(card);
-  else if(current.type === 'author') renderAuthor(card);
-  else if(current.type === 'distance') renderDistance(card);
-  else renderHistory(card);
 }
 function addLabel(card, text){
   const label = document.createElement('div');
@@ -1651,10 +1666,22 @@ function renderHistoryBookChoice(card){
 }
 function chapterValues(ev){ return Array.isArray(ev.chapter) ? ev.chapter : [ev.chapter]; }
 function chapterOptions(correct){
-  const correctVals = chapterValues({chapter:correct});
-  const vals=new Set(correctVals);
-  const anchor=correctVals[0];
-  while(vals.size<4){ const delta=Math.floor(Math.random()*7)-3; const v=Math.max(1,anchor+delta); vals.add(v); }
+  const correctVals = chapterValues({chapter:correct}).filter(v => typeof v === 'number' && !isNaN(v));
+  if(correctVals.length === 0){
+    // Kein gültiges Kapitel hinterlegt - Notfall-Optionen statt möglicher Endlosschleife.
+    return [1,2,3,4];
+  }
+  const vals = new Set(correctVals);
+  const anchor = correctVals[0];
+  let guard = 0;
+  while(vals.size < 4 && guard < 200){
+    guard++;
+    const delta = Math.floor(Math.random()*7) - 3;
+    const v = Math.max(1, anchor + delta);
+    vals.add(v);
+  }
+  let filler = 101;
+  while(vals.size < 4) vals.add(filler++); // absoluter Notanker, garantiert terminierend
   return shuffleArr([...vals]).slice(0,4);
 }
 function finishHistoryHard(isRight, fb, extraFinish){
