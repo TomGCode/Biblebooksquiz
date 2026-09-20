@@ -1416,7 +1416,7 @@ function checkOrder(fb){
       path.push(FAMILIES[fam].label);
     });
   if(isRight){
-    fb.textContent = 'Richtig sortiert!' + path.join(' → ');
+    fb.textContent = 'Richtig sortiert! ' + path.join(' → ');
   }else{    
     fb.textContent = 'Richtige Reihenfolge: ' + path.join(' → ');
   }
