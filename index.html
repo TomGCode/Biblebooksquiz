@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Die Reihenfolge der biblischen Bücher</title>
+<title>Lerne die Reihenfolge der biblischen Bücher. Trainiere dein Bibelwissen.</title>
 <style>
   :root{
     --paper: #EFEAE0;
@@ -31,9 +31,12 @@
     justify-content:center;
     padding:20px 14px 40px;
   }
-  .app{width:100%;max-width:440px;}
+  .app{width:100%;max-width:440px;position:relative;}
 
-  header{text-align:center;margin-bottom:18px;}
+  header {
+    text-align: center;
+    margin-bottom: 18px;
+  }
   header .title{
     font-family:var(--serif);
     font-size:26px;
@@ -41,20 +44,52 @@
     letter-spacing:0.2px;
     color:var(--ink);
   }
+  header .userLine{
+    font-family:var(--sans);
+    font-size:18px;
+    font-weight:700;
+    color:var(--ink);
+    background:var(--gold-soft);
+    padding:4px 14px;
+    border-radius:14px;
+    letter-spacing:0.2px;
+  }
+  .gearBtn{
+    width:34px;
+    height:34px;
+    border-radius:50%;
+    border:3px solid var(--rule);
+    background:transparent;
+    color:var(--ink-soft);
+    font-size:28px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+	line-height: 1;
+	padding-bottom: 4px;
+  }
+  .userContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+  }
 
   .shelfGroup{margin-bottom:10px;}
   .masteryLine{font-family:var(--serif);font-size:14px;color:var(--ink);text-align:center;margin:0 0 8px;}
-.recentGreen{font-size:11px;color:var(--ink-soft);text-align:center;margin:-2px 0 12px;min-height:15px;}
-.shelf .spine.catStart{margin-left:5px;}
-.historyMode{font-size:11.5px;color:var(--gold);margin:-8px 0 12px;}
-
-.bookSuggestWrap{position:relative;width:100%;margin:0 0 10px;}
-.bookSuggestions{position:absolute;left:0;right:0;top:100%;z-index:20;background:var(--paper);border:1px solid var(--rule);border-top:0;border-radius:0 0 5px 5px;box-shadow:0 4px 10px rgba(0,0,0,.12);overflow:hidden;}
-.bookSuggestion{display:block;width:100%;padding:10px 12px;border:0;background:var(--paper);color:var(--ink);text-align:left;font:inherit;cursor:pointer;}
-.bookSuggestion:hover,.bookSuggestion:focus{background:var(--paper-2);outline:none;}
-.chapterInput{font-family:var(--sans);font-size:16px;padding:12px;text-align:center;border:1px solid var(--rule);border-radius:5px;background:var(--paper);color:var(--ink);width:100%;}
-.chapterHint{font-size:12px;color:var(--ink-soft);text-align:center;margin:0 0 10px;}
-.shelfLabel{
+  .recentGreen{font-size:11px;color:var(--ink-soft);text-align:center;margin:-2px 0 12px;min-height:15px;}
+  .shelf .spine.catStart{margin-left:5px;}
+  .historyMode{font-size:11.5px;color:var(--gold);margin:-8px 0 12px;}
+  
+  .bookSuggestWrap{position:relative;width:100%;margin:0 0 10px;}
+  .bookSuggestions{position:absolute;left:0;right:0;top:100%;z-index:20;background:var(--paper);border:1px solid var(--rule);border-top:0;border-radius:0 0 5px 5px;box-shadow:0 4px 10px rgba(0,0,0,.12);overflow:hidden;}
+  .bookSuggestion{display:block;width:100%;padding:10px 12px;border:0;background:var(--paper);color:var(--ink);text-align:left;font:inherit;cursor:pointer;}
+  .bookSuggestion:hover,.bookSuggestion:focus{background:var(--paper-2);outline:none;}
+  .chapterInput{font-family:var(--sans);font-size:16px;padding:12px;text-align:center;border:1px solid var(--rule);border-radius:5px;background:var(--paper);color:var(--ink);width:100%;}
+  .chapterHint{font-size:12px;color:var(--ink-soft);text-align:center;margin:0 0 10px;}
+  .shelfLabel{
     font-size:10px;
     color:var(--ink-soft);
     letter-spacing:0.3px;
@@ -280,20 +315,32 @@
     font-size:12.5px;
     color:var(--ink-soft);
   }
-  footer .resetLink{
-    background:none;border:none;color:var(--ink-soft);
-    text-decoration:underline;cursor:pointer;font-size:12px;font-family:var(--sans);
-    padding:0;
+  
+  #storageStatus {
+    font-size: 10.5px;
+    text-align: right;
+  }
+
+  .version-info {
+    font-size: 9px;
+    color: var(--ink-soft);
+    text-align: center;
+    margin-top: 4px;
+    opacity: .75;
   }
 </style>
 </head>
 <body>
 <div class="app">
   <header>
-    <div class="title">Lerne und trainiere die Reihenfolge der biblischen Bücher.</div>
+    <div class="title">Lerne die Reihenfolge der biblischen Bücher. Trainiere dein Bibelwissen.</div>
+	<div class="userContainer">
+      <div class="userLine" id="userLine"></div>
+	  <button class="gearBtn" id="optionsBtn" aria-label="Optionen" title="Optionen">⚙️</button>
+	</div>
   </header>
 
-  <div class="masteryLine" id="masteryLine">Sicher beherrscht: 0 / 66 Bücher</div>
+  <div class="masteryLine" id="masteryLine">Sicher beherrscht: 0 von 66 Büchern</div>
   <div class="recentGreen" id="recentGreen"></div>
 
   <div class="shelfGroup">
@@ -314,15 +361,16 @@
     <button class="testStart" id="settingsBtn">Fragetypen</button>
   </div>
   <div class="settingsPanel" id="settingsPanel" style="display:none;"></div>
+  <div class="settingsPanel" id="optionsPanel" style="display:none;"></div>
+  <input type="file" id="importFile" accept="application/json" style="display:none;">
 
   <div class="card" id="card"></div>
 
   <footer>
-    <span id="statLine">Serie: 0 · Richtig: 0/0</span>
-    <button class="resetLink" id="resetBtn">Fortschritt zurücksetzen</button>
+    <span id="statLine">Serie: 0 · Rekord: 0 · Richtig: 0/0</span>
+	<span id="storageStatus">Speicherstatus wird geprüft …</span>
   </footer>
-  <div id="storageStatus" style="font-size:10.5px;color:var(--ink-soft);text-align:center;margin-top:8px;">Speicherstatus wird geprüft …</div>
-  <div style="font-size:9px;color:var(--ink-soft);text-align:center;margin-top:4px;opacity:.75;">Version 1.3.6</div>
+  <div class="version-info">Version 1.4.1</div> 
 </div>
 
 <script>
@@ -386,7 +434,6 @@ const TYPE_LABELS = {
   author:'Autor', history:'Biblische Geschichte', distance:'Abstand',
   catBool:'Kategorie (Ja/Nein)', catCount:'Kategorie · Anzahl',
   catOrder:'Kategorie · Reihenfolge', catSelect:'Kategorie · Auswahl'
-  
 };
 const TYPE_DESCRIPTIONS = {
   pair:'Zwei Bücher — welches kommt zuerst?',
@@ -406,7 +453,7 @@ let enabledTypes = { pair:true, gap:true, order:true, author:false, history:fals
 
 function loadTypeSettings(){
   try{
-    const raw = localStorage.getItem('bibleQuizTypesEnabled');
+    const raw = localStorage.getItem(userKey('types'));
     if(raw){
       const parsed = JSON.parse(raw);
       TYPE_KEYS.forEach(k => { if(typeof parsed[k] === 'boolean') enabledTypes[k] = parsed[k]; });
@@ -414,7 +461,7 @@ function loadTypeSettings(){
   }catch(e){}
 }
 function saveTypeSettings(){
-  try{ localStorage.setItem('bibleQuizTypesEnabled', JSON.stringify(enabledTypes)); }catch(e){}
+  try{ localStorage.setItem(userKey('types'), JSON.stringify(enabledTypes)); }catch(e){}
 }
 function renderSettingsPanel(){
   const panel = document.getElementById('settingsPanel');
@@ -465,13 +512,111 @@ let answered = false;
 let testMode = false, testIndex = 0, testScore = 0;
 const TEST_LENGTH = 10;
 
-const STORAGE_KEY_WEIGHTS = 'bibleQuizWeights';
-const STORAGE_KEY_STATS = 'bibleQuizStats';
-const STORAGE_KEY_HISTORY = 'bibleQuizHistory';
 let historyProgress = {};
+let hardModeEnabled = true;
+let focusModeEnabled = false;
 
 // Ab wann eine einzelne Geschichte in den schweren Modus wechselt.
 const HISTORY_UNLOCK_CORRECT = 3;
+
+// ---------- Benutzerverwaltung ----------
+// Alle Fortschritts-Keys werden pro Benutzer unter 'bibleQuiz:<Name>:<Teil>' abgelegt.
+// Liste bekannter Benutzer und der zuletzt aktive Name liegen unter eigenen, globalen Keys.
+let activeUser = null;
+let knownUsers = [];
+
+function userKey(suffix){ return 'bibleQuiz:' + activeUser + ':' + suffix; }
+
+function loadUsersList(){
+  try{
+    const raw = localStorage.getItem('bibleQuizUsers');
+    knownUsers = raw ? JSON.parse(raw) : [];
+  }catch(e){ knownUsers = []; }
+}
+function saveUsersList(){
+  try{ localStorage.setItem('bibleQuizUsers', JSON.stringify(knownUsers)); }catch(e){}
+}
+function setActiveUser(name){
+  activeUser = name;
+  try{ localStorage.setItem('bibleQuizActiveUser', name); }catch(e){}
+}
+
+function migrateLegacyData(name){
+  try{
+    const legacy = { weights:'bibleQuizWeights', stats:'bibleQuizStats', history:'bibleQuizHistory', types:'bibleQuizTypesEnabled' };
+    Object.keys(legacy).forEach(suffix=>{
+      const raw = localStorage.getItem(legacy[suffix]);
+      if(raw !== null){
+        localStorage.setItem('bibleQuiz:' + name + ':' + suffix, raw);
+        localStorage.removeItem(legacy[suffix]);
+      }
+    });
+  }catch(e){}
+}
+
+function ensureUser(){
+  loadUsersList();
+  let active = null;
+  try{ active = localStorage.getItem('bibleQuizActiveUser'); }catch(e){}
+  if(active && knownUsers.includes(active)){
+    activeUser = active;
+    return;
+  }
+  let hasLegacyData = false;
+  try{ hasLegacyData = localStorage.getItem('bibleQuizWeights') !== null; }catch(e){}
+  let name = prompt(hasLegacyData
+    ? 'Wie heißt du? (dein bisheriger Fortschritt wird für dich übernommen)'
+    : 'Willkommen! Wie heißt du?');
+  name = (name || '').trim() || 'Spieler';
+  if(!knownUsers.includes(name)) knownUsers.push(name);
+  saveUsersList();
+  setActiveUser(name);
+  if(hasLegacyData) migrateLegacyData(name);
+}
+
+async function switchToActiveUser(){
+  weights = new Array(N).fill(6);
+  stats = {totalAnswered:0, totalCorrect:0, currentStreak:0, bestStreak:0, recentGreen:[]};
+  historyProgress = {};
+  enabledTypes = { pair:true, gap:true, order:true, catBool:false, catCount:false, catOrder:false, catSelect:false, author:false, history:false, distance:false };
+  hardModeEnabled = true;
+  focusModeEnabled = false;
+  loadTypeSettings();
+  loadHardModeSetting();
+  loadFocusModeSetting();
+  await loadProgress();
+  renderUserLine();
+  renderShelf();
+  renderStats();
+  testMode = false;
+  document.getElementById('optionsPanel').style.display = 'none';
+  nextQuestion();
+}
+
+function renderUserLine(){
+  const el = document.getElementById('userLine');
+  if(el) el.textContent = activeUser || '';
+}
+
+function loadHardModeSetting(){
+  try{
+    const raw = localStorage.getItem(userKey('hardmode'));
+    hardModeEnabled = raw === null ? true : JSON.parse(raw);
+  }catch(e){ hardModeEnabled = true; }
+}
+function saveHardModeSetting(){
+  try{ localStorage.setItem(userKey('hardmode'), JSON.stringify(hardModeEnabled)); }catch(e){}
+}
+
+function loadFocusModeSetting(){
+  try{
+    const raw = localStorage.getItem(userKey('focusmode'));
+    focusModeEnabled = raw === null ? false : JSON.parse(raw);
+  }catch(e){ focusModeEnabled = false; }
+}
+function saveFocusModeSetting(){
+  try{ localStorage.setItem(userKey('focusmode'), JSON.stringify(focusModeEnabled)); }catch(e){}
+}
 
 function setStorageStatus(text){
   const el = document.getElementById('storageStatus');
@@ -480,14 +625,14 @@ function setStorageStatus(text){
 
 function loadProgress(){
   try{
-    const w = localStorage.getItem(STORAGE_KEY_WEIGHTS);
-    const s = localStorage.getItem(STORAGE_KEY_STATS);
+    const w = localStorage.getItem(userKey('weights'));
+    const s = localStorage.getItem(userKey('stats'));
     if(w) weights = JSON.parse(w);
     if(s) stats = JSON.parse(s);
     if(!Array.isArray(stats.recentGreen)) stats.recentGreen = [];
-    const h = localStorage.getItem(STORAGE_KEY_HISTORY);
+    const h = localStorage.getItem(userKey('history'));
     if(h) historyProgress = JSON.parse(h);
-    setStorageStatus((w || s) ? 'Vorheriger Fortschritt geladen ✓' : 'Kein gespeicherter Fortschritt gefunden (erster Start auf diesem Gerät/Browser).');
+    setStorageStatus((w || s) ? 'Vorheriger Fortschritt geladen ✓' : 'Kein gespeicherter Fortschritt gefunden (erster Start für diesen Benutzer).');
   }catch(e){
     setStorageStatus('⚠️ Laden fehlgeschlagen: ' + (e && e.message ? e.message : String(e)));
   }
@@ -495,13 +640,52 @@ function loadProgress(){
 
 function saveProgress(){
   try{
-    localStorage.setItem(STORAGE_KEY_WEIGHTS, JSON.stringify(weights));
-    localStorage.setItem(STORAGE_KEY_STATS, JSON.stringify(stats));
-    localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(historyProgress));
+    localStorage.setItem(userKey('weights'), JSON.stringify(weights));
+    localStorage.setItem(userKey('stats'), JSON.stringify(stats));
+    localStorage.setItem(userKey('history'), JSON.stringify(historyProgress));
     setStorageStatus('Gespeichert ✓ · ' + new Date().toLocaleTimeString());
   }catch(e){
     setStorageStatus('⚠️ Speichern fehlgeschlagen: ' + (e && e.message ? e.message : String(e)) + ' — bitte "Fortschritt exportieren" als Sicherung nutzen.');
   }
+}
+
+function exportProgress(){
+  const data = { user: activeUser, weights, stats, historyProgress, enabledTypes, hardModeEnabled, focusModeEnabled, exportedAt: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'bibel-quiz-' + activeUser + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function importProgress(file){
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    try{
+      const data = JSON.parse(e.target.result);
+      if(Array.isArray(data.weights) && data.weights.length === N) weights = data.weights;
+      if(data.stats) stats = data.stats;
+      if(!Array.isArray(stats.recentGreen)) stats.recentGreen = [];
+      if(data.historyProgress) historyProgress = data.historyProgress;
+      if(data.enabledTypes) TYPE_KEYS.forEach(k => { if(typeof data.enabledTypes[k] === 'boolean') enabledTypes[k] = data.enabledTypes[k]; });
+      if(typeof data.hardModeEnabled === 'boolean') hardModeEnabled = data.hardModeEnabled;
+      if(typeof data.focusModeEnabled === 'boolean') focusModeEnabled = data.focusModeEnabled;
+      await saveProgress();
+      saveTypeSettings();
+      saveHardModeSetting();
+      saveFocusModeSetting();
+      renderShelf();
+      renderStats();
+      setStorageStatus('Fortschritt importiert ✓');
+    }catch(err){
+      setStorageStatus('⚠️ Import fehlgeschlagen: Datei ungültig.');
+    }
+  };
+  reader.readAsText(file);
 }
 
 function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
@@ -519,10 +703,19 @@ function weightedIndex(weightArr, exclude){
   for(let i = 0; i < weightArr.length; i++) if(!exclude.includes(i)) return i;
   return 0;
 }
+// Fokus-Modus: blendet alle Gewichte <=9 ("nicht rot") aus, sodass nur noch schwache
+// Bücher/Gruppen/Kategorien/Ereignisse ausgewählt werden. Gibt es gerade keine roten
+// (alles schon einigermaßen sicher), fällt es automatisch auf die normale Gewichtung zurück.
+function applyFocus(arr){
+  if(!focusModeEnabled) return arr;
+  const filtered = arr.map(w => w > 9 ? w : 0);
+  return filtered.some(w => w > 0) ? filtered : arr;
+}
+
 function familyWeight(f){ return f.ids.reduce((s,i)=>s+weights[i],0)/f.ids.length; }
-function weightedFamilyIndex(){ return weightedIndex(FAMILIES.map(familyWeight)); }
+function weightedFamilyIndex(){ return weightedIndex(applyFocus(FAMILIES.map(familyWeight))); }
 function categoryWeight(c){ let s=0,n=0; for(let i=c.start;i<=c.end;i++){s+=weights[i];n++;} return s/n; }
-function weightedCategoryIndex(){ return weightedIndex(CATEGORIES.map(categoryWeight)); }
+function weightedCategoryIndex(){ return weightedIndex(applyFocus(CATEGORIES.map(categoryWeight))); }
 
 function updateWeight(idx, correct, delta){
   const before = weights[idx];
@@ -574,7 +767,7 @@ function renderShelf(pulseIndices){
     (i < 39 ? shelfAT : shelfNT).appendChild(d);
   }
   const mastered = weights.filter(w => w <= 2).length;
-  document.getElementById('masteryLine').textContent = 'Sicher beherrscht: ' + mastered + ' / ' + N + ' Bücher';
+  document.getElementById('masteryLine').textContent = 'Sicher beherrscht: ' + mastered + ' von ' + N + ' Büchern';
   const recent = (stats.recentGreen || []).map(i => BOOKS[i]);
   document.getElementById('recentGreen').textContent = recent.length ? 'Zuletzt sicher: ' + recent.join(' · ') : '';
 }
@@ -675,7 +868,7 @@ function genOrderSeq(){
 }
 
 function genCatBool(){
-  const idx = weightedIndex(weights, CATEGORY_EXCLUDED);
+  const idx = weightedIndex(applyFocus(weights), CATEGORY_EXCLUDED);
   const trueCat = categoryOf(idx);
   const isTrue = Math.random() < 0.5;
   let statementCat = trueCat;
@@ -1064,7 +1257,7 @@ function genDistance(){
 function genAuthor(){
   const eligible = FAMILIES.map((f,i)=>i).filter(i => AUTHORS[i] !== null);
   const w = eligible.map(i => familyWeight(FAMILIES[i]));
-  const famIdx = eligible[weightedIndex(w)];
+  const famIdx = eligible[weightedIndex(applyFocus(w))];
   const correctAuthor = AUTHORS[famIdx];
   const testament = FAMILIES[famIdx].testament;
   const regularPool = eligible.filter(i => FAMILIES[i].testament === testament && AUTHORS[i] !== correctAuthor).map(i => AUTHORS[i]);
@@ -1078,7 +1271,7 @@ function genAuthor(){
 function genHistory(){
   const weightForEvent = e => e.books ? e.books.reduce((s,i)=>s+weights[i],0)/e.books.length : weights[e.book];
   const w = EVENTS.map(weightForEvent);
-  const evIdx = weightedIndex(w);
+  const evIdx = weightedIndex(applyFocus(w));
   const ev = EVENTS[evIdx];
   const multiBook = Array.isArray(ev.books) && ev.books.length > 1;
   const targetBook = multiBook ? null : (ev.book !== undefined ? ev.book : ev.books[0]);
@@ -1086,7 +1279,7 @@ function genHistory(){
   // Mehrfach-Evangelien bleiben bei der Mehrfachauswahl. Ereignisse mit genau
   // einem Buch können dagegen nach drei richtigen Zuordnungen schwer werden.
   if(multiBook){ return { type:'history', ev, selected:new Set(), evIdx, hard:false, multiBook:true }; }
-  const hard = progress.bookCorrect >= HISTORY_UNLOCK_CORRECT;
+  const hard = hardModeEnabled && progress.bookCorrect >= HISTORY_UNLOCK_CORRECT;
   // Events, die als books:[...] markiert sind (auch mit nur einem Evangelium), sind Evangelien-Vergleichsfragen:
   // die Antwortoptionen bleiben dann ausschließlich unter den vier Evangelien.
   const isGospelEvent = Array.isArray(ev.books);
@@ -1791,9 +1984,152 @@ function renderTestSummary(){
   card.appendChild(back);
 }
 
+function buildToggleRow(label, desc, isOn, onToggle){
+  const row = document.createElement('div');
+  row.className = 'settingsRow';
+  const text = document.createElement('div');
+  text.style.display = 'flex';
+  text.style.flexDirection = 'column';
+  text.style.gap = '2px';
+  text.style.paddingRight = '10px';
+  const labelEl = document.createElement('span');
+  labelEl.textContent = label;
+  const descEl = document.createElement('span');
+  descEl.textContent = desc;
+  descEl.style.fontSize = '11.5px';
+  descEl.style.color = 'var(--ink-soft)';
+  descEl.style.fontFamily = 'var(--serif)';
+  descEl.style.fontStyle = 'italic';
+  text.appendChild(labelEl);
+  text.appendChild(descEl);
+  const toggle = document.createElement('div');
+  toggle.className = 'toggle' + (isOn ? ' on' : '');
+  toggle.onclick = onToggle;
+  row.appendChild(text);
+  row.appendChild(toggle);
+  return row;
+}
+
+function renderOptionsPanel(){
+  const panel = document.getElementById('optionsPanel');
+  panel.innerHTML = '';
+
+  panel.appendChild(buildToggleRow(
+    'Schwerer Modus',
+    'Fragt nach 3 richtigen Antworten zu einem Ereignis zusätzlich das Kapitel ab.',
+    hardModeEnabled,
+    () => { hardModeEnabled = !hardModeEnabled; saveHardModeSetting(); renderOptionsPanel(); }
+  ));
+
+  panel.appendChild(buildToggleRow(
+    'Fokus-Modus',
+    'Fragt nur noch schwache ("rote") Bücher ab, bis wieder alles sicher sitzt.',
+    focusModeEnabled,
+    () => { focusModeEnabled = !focusModeEnabled; saveFocusModeSetting(); renderOptionsPanel(); }
+  ));
+
+  const userHead = document.createElement('div');
+  userHead.textContent = 'Benutzer';
+  userHead.style.fontSize = '11px';
+  userHead.style.color = 'var(--ink-soft)';
+  userHead.style.margin = '14px 0 6px';
+  userHead.style.letterSpacing = '0.3px';
+  panel.appendChild(userHead);
+
+  knownUsers.forEach(name=>{
+    const row = document.createElement('div');
+    row.className = 'settingsRow';
+    const label = document.createElement('span');
+    label.textContent = name + (name === activeUser ? ' (aktiv)' : '');
+    row.appendChild(label);
+    if(name !== activeUser){
+      const switchBtn = document.createElement('button');
+      switchBtn.className = 'ghost';
+      switchBtn.textContent = 'Wechseln';
+      switchBtn.onclick = async () => {
+        setActiveUser(name);
+        await switchToActiveUser();
+      };
+      row.appendChild(switchBtn);
+    }
+    panel.appendChild(row);
+  });
+
+  const addRow = document.createElement('div');
+  addRow.style.margin = '10px 0 4px';
+  const addBtn = document.createElement('button');
+  addBtn.className = 'ghost';
+  addBtn.textContent = '+ Neuer Benutzer';
+  addBtn.onclick = async () => {
+    let name = prompt('Name des neuen Benutzers:');
+    if(!name) return;
+    name = name.trim();
+    if(!name) return;
+    if(!knownUsers.includes(name)){ knownUsers.push(name); saveUsersList(); }
+    setActiveUser(name);
+    await switchToActiveUser();
+  };
+  addRow.appendChild(addBtn);
+  panel.appendChild(addRow);
+
+  const backupHead = document.createElement('div');
+  backupHead.textContent = 'Fortschritt sichern';
+  backupHead.style.fontSize = '11px';
+  backupHead.style.color = 'var(--ink-soft)';
+  backupHead.style.margin = '14px 0 6px';
+  backupHead.style.letterSpacing = '0.3px';
+  panel.appendChild(backupHead);
+
+  const backupRow = document.createElement('div');
+  backupRow.style.display = 'flex';
+  backupRow.style.gap = '10px';
+  backupRow.style.paddingBottom = '10px';
+  const exportBtn = document.createElement('button');
+  exportBtn.className = 'ghost';
+  exportBtn.textContent = 'Exportieren';
+  exportBtn.onclick = exportProgress;
+  const importBtn = document.createElement('button');
+  importBtn.className = 'ghost';
+  importBtn.textContent = 'Importieren';
+  importBtn.onclick = () => document.getElementById('importFile').click();
+  backupRow.appendChild(exportBtn);
+  backupRow.appendChild(importBtn);
+  panel.appendChild(backupRow);
+
+  const dangerHead = document.createElement('div');
+  dangerHead.textContent = 'Fortschritt von ' + activeUser;
+  dangerHead.style.fontSize = '11px';
+  dangerHead.style.color = 'var(--ink-soft)';
+  dangerHead.style.margin = '14px 0 6px';
+  dangerHead.style.letterSpacing = '0.3px';
+  panel.appendChild(dangerHead);
+
+  const resetRow = document.createElement('div');
+  resetRow.style.paddingBottom = '10px';
+  const resetBtn = document.createElement('button');
+  resetBtn.className = 'resetLink';
+  resetBtn.textContent = 'Fortschritt zurücksetzen';
+  resetBtn.onclick = handleReset;
+  resetRow.appendChild(resetBtn);
+  panel.appendChild(resetRow);
+}
+
+document.getElementById('optionsBtn').onclick = () => {
+  const panel = document.getElementById('optionsPanel');
+  const showing = panel.style.display !== 'none';
+  document.getElementById('settingsPanel').style.display = 'none';
+  panel.style.display = showing ? 'none' : 'block';
+  if(!showing) renderOptionsPanel();
+};
+document.getElementById('importFile').onchange = (e) => {
+  if(e.target.files[0]) importProgress(e.target.files[0]);
+  e.target.value = '';
+};
+
 document.getElementById('settingsBtn').onclick = () => {
   const panel = document.getElementById('settingsPanel');
   const showing = panel.style.display !== 'none';
+  document.getElementById('optionsPanel').style.display = 'none';
   panel.style.display = showing ? 'none' : 'block';
   if(!showing) renderSettingsPanel();
 };
@@ -1801,13 +2137,14 @@ document.getElementById('testBtn').onclick = () => {
   testMode = true; testIndex = 0; testScore = 0;
   nextQuestion();
 };
-document.getElementById('resetBtn').onclick = async () => {
-  if(!confirm('Deinen gesamten Fortschritt wirklich zurücksetzen?')) return;
+async function handleReset(){
+  if(!confirm('Fortschritt von ' + activeUser + ' wirklich zurücksetzen?')) return;
   weights = new Array(N).fill(6);
   stats = {totalAnswered:0, totalCorrect:0, currentStreak:0, bestStreak:0, recentGreen:[]};
   historyProgress = {};
-  localStorage.removeItem(STORAGE_KEY_HISTORY);
+  localStorage.removeItem(userKey('history'));
   testMode = false;
+  document.getElementById('optionsPanel').style.display = 'none';
   await saveProgress();
   renderShelf();
   renderStats();
@@ -1815,7 +2152,11 @@ document.getElementById('resetBtn').onclick = async () => {
 };
 
 (async function init(){
+  ensureUser();
+  renderUserLine();
   loadTypeSettings();
+  loadHardModeSetting();
+  loadFocusModeSetting();
   await loadProgress();
   renderShelf();
   renderStats();
