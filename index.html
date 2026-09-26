@@ -67,7 +67,7 @@
     align-items:center;
     justify-content:center;
 	line-height: 1;
-	padding-bottom: 4px;
+	padding-bottom: 3px;
   }
   .userContainer {
     display: flex;
@@ -370,7 +370,7 @@
     <span id="statLine">Serie: 0 · Rekord: 0 · Richtig: 0/0</span>
 	<span id="storageStatus">Speicherstatus wird geprüft …</span>
   </footer>
-  <div class="version-info">Version 1.4.1</div> 
+  <div class="version-info">Version 1.4.2</div> 
 </div>
 
 <script>
@@ -667,6 +667,10 @@ function importProgress(file){
   reader.onload = async (e) => {
     try{
       const data = JSON.parse(e.target.result);
+	  if(data.user && data.user !== activeUser){
+        const proceed = confirm('Diese Datei enthält den Fortschritt von "' + data.user + '", aktuell ist aber "' + activeUser + '" aktiv.\n\nTrotzdem in "' + activeUser + '" importieren?');
+        if(!proceed){ setStorageStatus('Import abgebrochen.'); return; }
+      }
       if(Array.isArray(data.weights) && data.weights.length === N) weights = data.weights;
       if(data.stats) stats = data.stats;
       if(!Array.isArray(stats.recentGreen)) stats.recentGreen = [];
